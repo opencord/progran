@@ -1,0 +1,22 @@
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+description: Onboard the Progran Service
+
+imports:
+   - custom_types/xos.yaml
+
+topology_template:
+  node_templates:
+    servicecontroller#progran:
+      type: tosca.nodes.ServiceController
+      properties:
+          base_url: file:///opt/xos_services/progran/xos/
+          # The following will concatenate with base_url automatically, if
+          # base_url is non-null.
+          models: models.py
+          #admin: admin.py
+          #tosca_custom_types: progran.yaml
+          #tosca_resource: tosca/resources/progranservice.py
+          rest_service: api/service/progran.py
+          synchronizer: synchronizer/manifest
+          synchronizer_run: progran-synchronizer.py
