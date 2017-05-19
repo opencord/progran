@@ -1,6 +1,6 @@
 from django.db import models
-from core.models import Service, PlCoreBase, Slice, Instance, Tenant, TenantWithContainer, Node, Image, User, Flavor, Subscriber, NetworkParameter, NetworkParameterType, Port, AddressPool
-from core.models.plcorebase import StrippedCharField
+from core.models import Service, XOSBase, Slice, Instance, Tenant, TenantWithContainer, Node, Image, User, Flavor, Subscriber, NetworkParameter, NetworkParameterType, Port, AddressPool
+from core.models.xosbase import StrippedCharField
 import os
 from django.db import models, transaction
 from django.forms.models import model_to_dict
@@ -68,7 +68,7 @@ class VProgranService(Service):
 
 
 
-class VProgranImsi(PlCoreBase):
+class VProgranImsi(XOSBase):
     class Meta:
         app_label = APP_LABEL
         verbose_name = "vProgran Imsi"
@@ -78,7 +78,7 @@ class VProgranImsi(PlCoreBase):
     profile = models.CharField(max_length=20, help_text="profile name", null=True, blank=True)
 
 
-class VProgranProfile(PlCoreBase):
+class VProgranProfile(XOSBase):
 
     class Meta:
         app_label = APP_LABEL
