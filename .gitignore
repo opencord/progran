@@ -1,0 +1,6 @@
+.idea/
+*.pyc
+
+# this folders are here in case you directly mount it inside the synchronzier container
+xos/synchronizer/ansible_runner
+xos/synchronizer/sys/

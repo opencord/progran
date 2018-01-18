@@ -1,0 +1,50 @@
+option app_label = "progran";
+option name = "progran";
+option legacy = "True";
+
+message ProgranService (Service){
+    option verbose_name = "Progran Service";
+    required string onos_address = 1 [help_text = "Address of the progran ONOS", default = "onos-progran",  max_length = 254, null = False, db_index = False, blank = False];
+    required string onos_port = 2 [help_text = "Port of the progran ONOS", default = "8183", max_length = 254, null = False, db_index = False, blank = False];
+    required string onos_username = 3 [help_text = "Username of the progran ONOS", default = "karaf", max_length = 254, null = False, db_index = False, blank = False];
+    required string onos_password = 4 [help_text = "Password of the progran ONOS", default = "karaf", max_length = 254, null = False, db_index = False, blank = False];
+}
+
+message ENodeB (XOSBase){
+    option verbose_name = "eNodeB";
+    required string description = 1 [db_index = False, max_length = 256, null = False, blank = False];
+    required string enbId = 2 [help_text = "ID of this enodeb", db_index = False, max_length = 256, null = False, blank = False];
+    required string ipAddr = 3 [help_text = "IP address of this enodeb", db_index = False, max_length = 256, null = False, blank = False];
+}
+
+message Handover (XOSBase){
+    option verbose_name = "Handover";
+    required int32 A3offset = 1 [default = 2, db_index = False, null = False, blank = False];
+    required int32 HysteresisA3 = 2 [default = 1, db_index = False, null = False, blank = False];
+    required int32 A3TriggerQuantity = 3 [default = 0, db_index = False, null = False, blank = False];
+    required int32 A5TriggerType = 4 [default = 0, db_index = False, null = False, blank = False];
+    required int32 A5Thresh1Rsrp = 5 [default = -97, db_index = False, null = False, blank = False];
+    required int32 A5Thresh1Rsrq = 6 [default = -10, db_index = False, null = False, blank = False];
+    required int32 A5Thresh2Rsrp = 7 [default = -95, db_index = False, null = False, blank = False];
+    required int32 A5Thresh2Rsrq = 8 [default = -8, db_index = False, null = False, blank = False];
+    required int32 HysteresisA5 = 9 [default = 1, db_index = False, null = False, blank = False];
+    required int32 A5TriggerQuantity = 10 [default = 0, db_index = False, null = False, blank = False];
+}
+
+message ProgranServiceInstance (ServiceInstance){
+    option verbose_name = "Progran Service Instance";
+    option description = "Represent a Profile in the Progran ONOS Application";
+
+    required string DlSchedType = 1 [default = "vm", choices = "(('RR', 'Round Robin'),)", max_length = 30, blank = False, null = False, db_index = False];
+    required int32 DlAllocRBRate = 2 [db_index = False, null = False, blank = False];
+    required string UlSchedType = 3 [default = "vm", choices = "(('RR', 'Round Robin'),)", max_length = 30, blank = False, null = False, db_index = False];
+    required int32 UlAllocRBRate = 4 [db_index = False, null = False, blank = False];
+    required string start = 5 [content_type = "date", null = False, blank = True];
+    required string end = 6 [content_type = "date", null = False, blank = True];
+    required string AdmControl = 7 [default = "0", choices = "(('0', 'ALL'), ('1', 'Voice Only'), ('2', 'Data Only'))", max_length = 1, blank = False, null = False, db_index = False];
+    required int32 CellIndividualOffset = 8 [db_index = False, null = False, blank = False];
+    required manytoone enodeb->ENodeB:profiles = 9 [db_index = True, null = False, blank = False];
+    required manytoone handover->Handover:profiles = 10 [db_index = True, null = True, blank = False];
+}
+
+

@@ -1,0 +1,10 @@
+{
+  "A3offset":2,
+  "A5Thresh1Rsrp":-97,
+  "A5Thresh1Rsrq":-10,
+  "A5Thresh2Rsrp":-95,
+  "A5Thresh2Rsrq":-8,
+  "A5TriggerType":0,
+  "HysteresisA3":1,
+  "HysteresisA5":1
+}

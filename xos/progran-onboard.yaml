@@ -29,10 +29,4 @@ topology_template:
           base_url: file:///opt/xos_services/progran/xos/
           # The following will concatenate with base_url automatically, if
           # base_url is non-null.
-          models: models.py
-          #admin: admin.py
-          #tosca_custom_types: progran.yaml
-          #tosca_resource: tosca/resources/progranservice.py
-          rest_service: api/service/progran.py
-          synchronizer: synchronizer/manifest
-          synchronizer_run: progran-synchronizer.py
+          xproto: models/
