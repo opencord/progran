@@ -18,11 +18,13 @@ import os
 import sys
 from synchronizers.new_base.SyncInstanceUsingAnsible import SyncInstanceUsingAnsible
 from synchronizers.new_base.ansible_helper import run_template
-from synchronizers.new_base.modelaccessor import ProgranService, ProgranServiceInstance
+from synchronizers.new_base.modelaccessor import ProgranServiceInstance
 
 from xosconfig import Config
 from multistructlog import create_logger
 import json
+
+from helpers import ProgranHelpers
 
 log = create_logger(Config().get('logging'))
 
@@ -33,17 +35,6 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
     provides = [ProgranServiceInstance]
 
     observes = ProgranServiceInstance
-
-    def get_onos_info(self, si):
-
-        progran_service = si.owner.leaf_model
-
-        return {
-            'url': progran_service.onos_address,
-            'port': progran_service.onos_port,
-            'username': progran_service.onos_username,
-            'password': progran_service.onos_password,
-        }
 
     def skip_ansible_fields(self, o):
         # FIXME This model does not have an instance, this is a workaroung to make it work,
@@ -81,19 +72,51 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
         profile = json.dumps(profile)
         return profile
 
-    def get_extra_attributes(self, o):
-        onos = self.get_onos_info(o)
-        fields = {
+    def sync_record(self, o):
+        # NOTE overriding the default sync_record as we need to execute the playbook 2 times (profile and enodeb)
+
+        log.info("sync'ing profile", object=str(o), **o.tologdict())
+        onos = ProgranHelpers.get_onos_info_from_si(o)
+
+        # common field for both operations
+        base_field = {
             'onos_url': onos['url'],
             'onos_username': onos['username'],
             'onos_password': onos['password'],
             'onos_port': onos['port'],
+        }
+
+        # progran profile specific fields
+        profile_fields = {
             'endpoint': 'profile',
             'profile': self.get_progran_profile_field(o),
             'method': 'POST'
         }
+        profile_fields["ansible_tag"] = getattr(o, "ansible_tag", o.__class__.__name__ + "_" + str(o.id))
+        profile_fields.update(base_field)
+        self.run_playbook(o, profile_fields)
 
-        return fields
+        # progran enodeb specific fields
+        if o.enodeb:
+            log.info("adding profile to enodeb", object=str(o), **o.tologdict())
+            enodeb_fields = {
+                'profile': json.dumps({
+                    "ProfileArray": [
+                        o.name
+                    ]
+                }),
+                'method': 'POST',
+                'endpoint': 'enodeb/%s/profile' % o.enodeb.enbId
+            }
+            enodeb_fields["ansible_tag"] =  o.__class__.__name__ + "_" + str(o.id) + "_enodeb_to_profile"
+            enodeb_fields.update(base_field)
+            self.run_playbook(o, enodeb_fields)
+        else:
+            log.warn("IMPLEMENT THE CALL TO REMOVE A PROFILE FROM ENODEB")
+
+
+        o.save()
+
 
     # FIXME we need to override this as the default expect to ssh into a VM
     def run_playbook(self, o, fields):
@@ -101,7 +124,7 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
 
     def delete_record(self, o):
         log.info("deleting object", object=str(o), **o.tologdict())
-        onos = self.get_onos_info(o)
+        onos = ProgranHelpers.get_onos_info_from_si(o)
         fields = {
             'onos_url': onos['url'],
             'onos_username': onos['username'],

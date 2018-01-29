@@ -9,6 +9,6 @@
   "DlAllocRBRate":1,
   "name":"test-profile",
   "UlAllocRBRate":12,
-  "enodeb_id":2,
+  "enodeb_id":1,
   "handover_id":1
 }

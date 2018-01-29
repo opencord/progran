@@ -43,8 +43,8 @@ message ProgranServiceInstance (ServiceInstance){
     required string end = 6 [content_type = "date", null = False, blank = True];
     required string AdmControl = 7 [default = "0", choices = "(('0', 'ALL'), ('1', 'Voice Only'), ('2', 'Data Only'))", max_length = 1, blank = False, null = False, db_index = False];
     required int32 CellIndividualOffset = 8 [db_index = False, null = False, blank = False];
-    required manytoone enodeb->ENodeB:profiles = 9 [db_index = True, null = False, blank = False];
-    required manytoone handover->Handover:profiles = 10 [db_index = True, null = True, blank = False];
+    required manytoone enodeb->ENodeB:profiles = 9 [null = True, blank = True];
+    required manytoone handover->Handover:profiles = 10 [null = False, blank = False];
 }
 
 
