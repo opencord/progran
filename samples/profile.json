@@ -1,14 +1,17 @@
 {
-  "id": 1,
   "AdmControl":"0",
   "DlSchedType":"RR",
-  "start":1516780800,
+  "start": 1516780800,
   "UlSchedType":"RR",
-  "end":1517385600,
+  "end": 1517385600,
   "CellIndividualOffset":1,
   "DlAllocRBRate":1,
   "name":"test-profile",
   "UlAllocRBRate":12,
-  "enodeb_id":1,
+  "mmeip": "10.20.30.40",
+  "mmeport": "8080",
+  "DlWifiRate": "80",
+  "DlUeAllocRbRate": "70",
+  "enodeb_id":5,
   "handover_id":1
 }

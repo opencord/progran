@@ -60,14 +60,18 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
         profile = {
             'AdmControl': o.AdmControl,
             "DlSchedType": o.DlSchedType,
-            "Start": o.start,
+            "Start": o.start, # TODO date has to be in the format dd.MM.yyyy HH:mm
             "UlSchedType": o.UlSchedType,
-            "End": o.end,
+            "End": o.end, # TODO date has to be in the format dd.MM.yyyy HH:mm
             "CellIndividualOffset": o.CellIndividualOffset,
             "DlAllocRBRate": o.DlAllocRBRate,
             "Name": o.name,
             "UlAllocRBRate": o.UlAllocRBRate,
             "Handover": self.get_handover_for_profile(o),
+            'mmeip': o.mmeip,
+            'mmeport': o.mmeport,
+            'DlWifiRate': o.DlWifiRate,
+            'DlUeAllocRbRate': o.DlUeAllocRbRate,
         }
         profile = json.dumps(profile)
         return profile

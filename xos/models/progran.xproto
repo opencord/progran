@@ -39,12 +39,17 @@ message ProgranServiceInstance (ServiceInstance){
     required int32 DlAllocRBRate = 2 [db_index = False, null = False, blank = False];
     required string UlSchedType = 3 [default = "vm", choices = "(('RR', 'Round Robin'),)", max_length = 30, blank = False, null = False, db_index = False];
     required int32 UlAllocRBRate = 4 [db_index = False, null = False, blank = False];
-    required string start = 5 [content_type = "date", null = False, blank = True];
-    required string end = 6 [content_type = "date", null = False, blank = True];
-    required string AdmControl = 7 [default = "0", choices = "(('0', 'ALL'), ('1', 'Voice Only'), ('2', 'Data Only'))", max_length = 1, blank = False, null = False, db_index = False];
+    required string start = 5 [content_type = "date", null = True, blank = True];
+    required string end = 6 [content_type = "date", null = True, blank = True];
+    required int32 AdmControl = 7 [default = "0", choices = "(('0', 'ALL'), ('1', 'Voice Only'), ('2', 'Data Only'))", max_length = 1, blank = False, null = False, db_index = False];
     required int32 CellIndividualOffset = 8 [db_index = False, null = False, blank = False];
-    required manytoone enodeb->ENodeB:profiles = 9 [null = True, blank = True];
-    required manytoone handover->Handover:profiles = 10 [null = False, blank = False];
+    required string mmeip = 9 [db_index = False, max_length = 256, null = False, blank = False];
+    required string mmeport = 10 [db_index = False, max_length = 256, null = False, blank = False];
+    required int32 DlWifiRate = 11 [default = 100, db_index = False, null = False, blank = False];
+    required int32 DlUeAllocRbRate = 12 [default = 100, db_index = False, null = False, blank = False];
+    required string SubsProfile = 13 [ db_index = False, null = True, blank = True];
+    required manytoone enodeb->ENodeB:profiles = 14 [null = True, blank = True];
+    required manytoone handover->Handover:profiles = 15 [null = False, blank = False];
 }
 
 

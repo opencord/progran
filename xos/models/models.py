@@ -29,6 +29,8 @@ class ENodeB(ENodeB_decl):
     class Meta:
         proxy = True
 
+    ## TODO do not allow enbId duplicates
+
 
 class Handover(Handover_decl):
     class Meta:

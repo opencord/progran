@@ -27,7 +27,10 @@ class ProgranHelpers():
 
     @staticmethod
     def get_progran_onos_info():
-        progran_service = ProgranService.objects.all()[0]
+        try:
+            progran_service = ProgranService.objects.all()[0]
+        except IndexError:
+            log.error("Cannot find Progran Service, does it exists?")
         return ProgranHelpers.get_onos_info_from_service(progran_service)
 
     @staticmethod

@@ -6,5 +6,7 @@
   "A5Thresh2Rsrq":-8,
   "A5TriggerType":0,
   "HysteresisA3":1,
-  "HysteresisA5":1
+  "HysteresisA5":1,
+  "A3TriggerQuantity": 10,
+  "A5TriggerQuantity": 20
 }

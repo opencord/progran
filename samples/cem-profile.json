@@ -1,0 +1,19 @@
+
+{
+  "name":"testcem",
+  "DlSchedType":"RR",
+  "UlSchedType":"RR",
+  "DlAllocRBRate":16,
+  "UlAllocRBRate":15,
+  "start":0,
+  "end":0,
+  "AdmControl":1,
+  "CellIndividualOffset":1,
+  "mmeip":"192.168.28.35",
+  "mmeport":"123",
+  "SubsProfile":"",
+  "DlWifiRate":13,
+  "DlUeAllocRbRate":12,
+  "enodeb_id": 1,
+  "handover_id": 1
+}
