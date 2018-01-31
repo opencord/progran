@@ -23,6 +23,7 @@ from synchronizers.new_base.modelaccessor import MCordSubscriberInstance
 from xosconfig import Config
 from multistructlog import create_logger
 import json
+import requests
 
 
 log = create_logger(Config().get('logging'))
@@ -50,23 +51,42 @@ class SyncProgranIMSI(SyncInstanceUsingAnsible):
         imsi = json.dumps(imsi)
         return imsi
 
-    def get_extra_attributes(self, o):
+    def get_fields(self, o):
         onos = ProgranHelpers.get_progran_onos_info()
         fields = {
             'onos_url': onos['url'],
             'onos_username': onos['username'],
             'onos_password': onos['password'],
             'onos_port': onos['port'],
+        }
+
+        return fields
+
+    def sync_record(self, o):
+        # NOTE overriding the default method as we need to read from progran
+        base_fields = self.get_fields(o)
+
+        create_fields = {
             'endpoint': 'imsi',
             'body': self.get_progran_imsi_field(o),
             'method': 'POST'
         }
 
-        return fields
+        create_fields["ansible_tag"] = getattr(o, "ansible_tag", o.__class__.__name__ + "_" + str(o.id))
+        create_fields.update(base_fields)
+
+        self.run_playbook(o, create_fields)
+
+        # fetch the IMSI we just created
+        imsi_url = "http://%s:%s/onos/progran/imsi/%s" % (base_fields['onos_url'], base_fields['onos_port'], o.imsi_number)
+        r = requests.get(imsi_url)
+        o.ue_status = r.json()['ImsiArray'][0]['UeStatus']
+
+        o.save()
 
     # FIXME we need to override this as the default expect to ssh into a VM
     def run_playbook(self, o, fields):
-        run_template("progran_curl.yaml", fields, object=o)
+        return run_template("progran_curl.yaml", fields, object=o)
 
     def delete_record(self, o):
         log.info("deleting object", object=str(o), **o.tologdict())
