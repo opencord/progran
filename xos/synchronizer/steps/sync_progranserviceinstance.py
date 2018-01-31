@@ -24,12 +24,13 @@ from xosconfig import Config
 from multistructlog import create_logger
 import json
 
-from helpers import ProgranHelpers
 
 log = create_logger(Config().get('logging'))
 
 parentdir = os.path.join(os.path.dirname(__file__), "..")
 sys.path.insert(0, parentdir)
+sys.path.insert(0, os.path.dirname(__file__))
+from helpers import ProgranHelpers
 
 class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
     provides = [ProgranServiceInstance]
@@ -93,7 +94,7 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
         # progran profile specific fields
         profile_fields = {
             'endpoint': 'profile',
-            'profile': self.get_progran_profile_field(o),
+            'body': self.get_progran_profile_field(o),
             'method': 'POST'
         }
         profile_fields["ansible_tag"] = getattr(o, "ansible_tag", o.__class__.__name__ + "_" + str(o.id))
@@ -104,7 +105,7 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
         if o.enodeb:
             log.info("adding profile to enodeb", object=str(o), **o.tologdict())
             enodeb_fields = {
-                'profile': json.dumps({
+                'body': json.dumps({
                     "ProfileArray": [
                         o.name
                     ]
@@ -135,7 +136,7 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
             'onos_password': onos['password'],
             'onos_port': onos['port'],
             'endpoint': 'profile/%s' % o.name,
-            'profile': '',
+            'body': '',
             'method': 'DELETE'
         }
         res = self.run_playbook(o, fields)

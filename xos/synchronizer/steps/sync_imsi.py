@@ -18,7 +18,7 @@ import os
 import sys
 from synchronizers.new_base.SyncInstanceUsingAnsible import SyncInstanceUsingAnsible
 from synchronizers.new_base.ansible_helper import run_template
-from synchronizers.new_base.modelaccessor import ENodeB
+from synchronizers.new_base.modelaccessor import MCordSubscriberInstance
 
 from xosconfig import Config
 from multistructlog import create_logger
@@ -28,31 +28,27 @@ import json
 log = create_logger(Config().get('logging'))
 
 parentdir = os.path.join(os.path.dirname(__file__), "..")
-
 sys.path.insert(0, parentdir)
 sys.path.insert(0, os.path.dirname(__file__))
-
 from helpers import ProgranHelpers
 
-class SyncProgranEnodeB(SyncInstanceUsingAnsible):
-    provides = [ENodeB]
+class SyncProgranIMSI(SyncInstanceUsingAnsible):
+    provides = [MCordSubscriberInstance]
 
-    observes = ENodeB
+    observes = MCordSubscriberInstance
 
     def skip_ansible_fields(self, o):
         # FIXME This model does not have an instance, this is a workaroung to make it work,
         # but it need to be cleaned up creating a general SyncUsingAnsible base class
         return True
 
-    def get_progran_enodeb_field(self, o):
+    def get_progran_imsi_field(self, o):
 
-        enodeb = {
-            "eNBId": o.enbId,
-	        "Description": o.description,
-	        "IpAddr": o.ipAddr
+        imsi = {
+            "IMSI": o.imsi_number,
         }
-        enodeb = json.dumps(enodeb)
-        return enodeb
+        imsi = json.dumps(imsi)
+        return imsi
 
     def get_extra_attributes(self, o):
         onos = ProgranHelpers.get_progran_onos_info()
@@ -61,8 +57,8 @@ class SyncProgranEnodeB(SyncInstanceUsingAnsible):
             'onos_username': onos['username'],
             'onos_password': onos['password'],
             'onos_port': onos['port'],
-            'endpoint': 'enodeb',
-            'body': self.get_progran_enodeb_field(o),
+            'endpoint': 'imsi',
+            'body': self.get_progran_imsi_field(o),
             'method': 'POST'
         }
 
@@ -80,8 +76,8 @@ class SyncProgranEnodeB(SyncInstanceUsingAnsible):
             'onos_username': onos['username'],
             'onos_password': onos['password'],
             'onos_port': onos['port'],
-            'endpoint': 'enodeb/%s' % o.enbId,
-            'profile': '',
+            'endpoint': 'imsi/%s' % o.imsi_number,
+            'body': '',
             'method': 'DELETE'
         }
         res = self.run_playbook(o, fields)

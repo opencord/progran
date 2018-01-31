@@ -1,4 +1,3 @@
-from core.models import Service
 from xos.exceptions import XOSValidationError
 
 from models_decl import ProgranService_decl

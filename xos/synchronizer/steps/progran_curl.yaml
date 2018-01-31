@@ -16,12 +16,12 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
-    - profile: '{{ profile }}'
+    - body: '{{ body }}'
     - endpoint: '{{ endpoint }}'
 
   tasks:
     - debug:
-        msg: "{{ '{{' }} profile {{ '}}' }}"
+        msg: "{{ '{{' }} body {{ '}}' }}"
     # NOTE that the task has a generic name as it's planned to be used for all the requests
     - name: Call onos Progran
       uri:
@@ -32,6 +32,6 @@
         force_basic_auth: yes
         status_code: 200
         {% if method == "POST" or method == "PUT" -%}
-        body: "{{ '{{' }} profile {{ '}}' }}"
+        body: "{{ '{{' }} body {{ '}}' }}"
         body_format: json
         {%- endif -%}
