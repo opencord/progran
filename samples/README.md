@@ -27,3 +27,5 @@ Create a Profile: note that you'll need to replace `enodeb_id` and `handover_id`
 ```bash
 bash progran-curl.sh progran/progranserviceinstances profile.json
 ```
+
+curl -U xosadmin@opencord.org:bash -X PUT --data-binary @profile.json http://127.0.0.1:9101/xosapi/v1/progran/progranserviceinstances/4

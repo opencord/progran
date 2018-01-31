@@ -1,4 +1,3 @@
-
 {
   "name":"testcem",
   "DlSchedType":"RR",
@@ -12,5 +11,7 @@
   "SubsProfile":"",
   "DlWifiRate":13,
   "DlUeAllocRbRate":12,
-  "handover_id": 1
+  "handover_id": 1,
+  "id": 4,
+  "enodeb_id": 0
 }

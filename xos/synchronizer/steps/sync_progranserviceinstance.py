@@ -37,6 +37,10 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
 
     observes = ProgranServiceInstance
 
+    # NOTE I need to keep track of the relations between profile and enodebs to remove them
+    # it contains: <profile-id>:<enodeb_id>
+    profile_enodebs = {}
+
     def skip_ansible_fields(self, o):
         # FIXME This model does not have an instance, this is a workaroung to make it work,
         # but it need to be cleaned up creating a general SyncUsingAnsible base class
@@ -103,7 +107,7 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
 
         # progran enodeb specific fields
         if o.enodeb:
-            log.info("adding profile to enodeb", object=str(o), **o.tologdict())
+            log.info("adding profile %s to enodeb %s" % (o.id, o.enodeb.enbId), object=str(o), **o.tologdict())
             enodeb_fields = {
                 'body': json.dumps({
                     "ProfileArray": [
@@ -116,9 +120,26 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
             enodeb_fields["ansible_tag"] =  o.__class__.__name__ + "_" + str(o.id) + "_enodeb_to_profile"
             enodeb_fields.update(base_field)
             self.run_playbook(o, enodeb_fields)
-        else:
-            log.warn("IMPLEMENT THE CALL TO REMOVE A PROFILE FROM ENODEB")
 
+            # update local state
+            self.profile_enodebs[o.id] = o.enodeb.enbId
+        else:
+            try:
+                enbid = self.profile_enodebs[o.id]
+            except KeyError:
+                enbid = None
+            if enbid:
+                print enbid
+                log.info("removing profile %s from enodeb %s" % (o.id, self.profile_enodebs[o.id]), object=str(o), **o.tologdict())
+                enodeb_fields = {
+                    'body': '',
+                    'method': 'DELETE',
+                    'endpoint': 'enodeb/%s/profile/%s' % (enbid, o.name)
+                }
+                enodeb_fields["ansible_tag"] = o.__class__.__name__ + "_" + str(o.id) + "_rm_enodeb_from_profile"
+                enodeb_fields.update(base_field)
+                self.run_playbook(o, enodeb_fields)
+                del self.profile_enodebs[o.id]
 
         o.save()
 

@@ -63,6 +63,9 @@ class ProgranServiceInstance(ProgranServiceInstance_decl):
 
         if instances_with_same_name:
             raise XOSValidationError("A ProgranServiceInstance with name '%s' already exists" % self.name)
+
+
+        # TODO when saving set status to "in progress"
         super(ProgranServiceInstance, self).save(*args, **kwargs)
 
 
