@@ -50,6 +50,7 @@ message ProgranServiceInstance (ServiceInstance){
     required string SubsProfile = 13 [ db_index = False, null = True, blank = True];
     optional manytoone enodeb->ENodeB:profiles = 14 [null = True, blank = True];
     required manytoone handover->Handover:profiles = 15 [null = False, blank = False];
+    optional int32 active_enodeb_id = 16 [null = True, blank = True, gui_hidden = True];
 }
 
 

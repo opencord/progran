@@ -18,7 +18,7 @@ import os
 import sys
 from synchronizers.new_base.SyncInstanceUsingAnsible import SyncInstanceUsingAnsible
 from synchronizers.new_base.ansible_helper import run_template
-from synchronizers.new_base.modelaccessor import ProgranServiceInstance
+from synchronizers.new_base.modelaccessor import ProgranServiceInstance, ENodeB
 
 from xosconfig import Config
 from multistructlog import create_logger
@@ -36,10 +36,6 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
     provides = [ProgranServiceInstance]
 
     observes = ProgranServiceInstance
-
-    # NOTE I need to keep track of the relations between profile and enodebs to remove them
-    # it contains: <profile-id>:<enodeb_id>
-    profile_enodebs = {}
 
     def skip_ansible_fields(self, o):
         # FIXME This model does not have an instance, this is a workaroung to make it work,
@@ -105,8 +101,10 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
         profile_fields.update(base_field)
         self.run_playbook(o, profile_fields)
 
+        # import pdb; pdb.set_trace()
+
         # progran enodeb specific fields
-        if o.enodeb:
+        if o.enodeb_id:
             log.info("adding profile %s to enodeb %s" % (o.id, o.enodeb.enbId), object=str(o), **o.tologdict())
             enodeb_fields = {
                 'body': json.dumps({
@@ -121,25 +119,22 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
             enodeb_fields.update(base_field)
             self.run_playbook(o, enodeb_fields)
 
-            # update local state
-            self.profile_enodebs[o.id] = o.enodeb.enbId
-        else:
-            try:
-                enbid = self.profile_enodebs[o.id]
-            except KeyError:
-                enbid = None
-            if enbid:
-                print enbid
-                log.info("removing profile %s from enodeb %s" % (o.id, self.profile_enodebs[o.id]), object=str(o), **o.tologdict())
-                enodeb_fields = {
-                    'body': '',
-                    'method': 'DELETE',
-                    'endpoint': 'enodeb/%s/profile/%s' % (enbid, o.name)
-                }
-                enodeb_fields["ansible_tag"] = o.__class__.__name__ + "_" + str(o.id) + "_rm_enodeb_from_profile"
-                enodeb_fields.update(base_field)
-                self.run_playbook(o, enodeb_fields)
-                del self.profile_enodebs[o.id]
+            o.active_enodeb_id = o.enodeb_id
+
+        elif o.active_enodeb_id:
+
+            enb_id = ENodeB.objects.get(id=o.active_enodeb_id).enbId
+
+            log.info("removing profile %s from enodeb %s" % (o.name, o.active_enodeb_id), object=str(o), **o.tologdict())
+            enodeb_fields = {
+                'body': '',
+                'method': 'DELETE',
+                'endpoint': 'enodeb/%s/profile/%s' % (enb_id, o.name)
+            }
+            enodeb_fields["ansible_tag"] = o.__class__.__name__ + "_" + str(o.id) + "_rm_enodeb_from_profile"
+            enodeb_fields.update(base_field)
+            self.run_playbook(o, enodeb_fields)
+            o.active_enodeb_id = 0
 
         o.save()
 

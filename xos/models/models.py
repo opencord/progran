@@ -64,21 +64,14 @@ class ProgranServiceInstance(ProgranServiceInstance_decl):
         except IndexError:
             raise XOSValidationError("Service Progran cannot be found, please make sure that the model exists.")
 
-        # NOTE if the instance is new, check that the name is not duplicated
-        instances_with_same_name = None
-        # FIXME This may leave us vulnerable to someone changing the name at a later time and causing a conflict.
-        # If that's important to prevent, we could prevent that case when `self.pk!=None`,
-        # filter for ProgranServiceInstance with the same name but `pk!=self.pk`.
-        if self.pk is None:
-            try:
-                instances_with_same_name = ProgranServiceInstance.objects.get(name=self.name)
-            except self.DoesNotExist:
-                # it's ok not to find anything here
-                pass
+        # prevent name duplicates
+        try:
+            instances_with_same_name = ProgranServiceInstance.objects.get(name=self.name)
 
-        if instances_with_same_name:
-            raise XOSValidationError("A ProgranServiceInstance with name '%s' already exists" % self.name)
-
+            if (not self.pk and instances_with_same_name) or (self.pk and self.pk != instances_with_same_name.pk):
+                raise XOSValidationError("A ProgranServiceInstance with name '%s' already exists" % self.name)
+        except self.DoesNotExist:
+            pass
 
         # TODO when saving set status to "in progress"
         super(ProgranServiceInstance, self).save(*args, **kwargs)
