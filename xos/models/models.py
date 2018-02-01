@@ -73,6 +73,23 @@ class ProgranServiceInstance(ProgranServiceInstance_decl):
         except self.DoesNotExist:
             pass
 
+        # check that the sum of upload and download rate for a single enodeb is not greater than 95
+        limit = 95
+        same_enodeb = ProgranServiceInstance.objects.filter(enodeb_id=self.enodeb_id)
+
+        total_up = self.UlAllocRBRate
+        total_down = self.DlAllocRBRate
+
+        for p in same_enodeb:
+            total_up = total_up + p.UlAllocRBRate
+            total_down = total_down + p.DlAllocRBRate
+
+        if total_up > limit:
+            raise XOSValidationError("UlAllocRBRate for the enodeb associated with this profile is greater than %s" % limit)
+
+        if total_down > limit:
+            raise XOSValidationError("DlAllocRBRate for the enodeb associated with this profile is greater than %s" % limit)
+
         # TODO when saving set status to "in progress"
         super(ProgranServiceInstance, self).save(*args, **kwargs)
 
