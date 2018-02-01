@@ -28,7 +28,22 @@ class ENodeB(ENodeB_decl):
     class Meta:
         proxy = True
 
-    ## TODO do not allow enbId duplicates
+    def save(self, *args, **kwargs):
+
+        # remove all the profiles related to this enodeb (clearing the relation, not the models)
+        if self.deleted:
+            self.profiles.clear()
+
+        # prevent enbId duplicates
+        try:
+            instance_with_same_id = ENodeB.objects.get(enbId=self.enbId)
+
+            if (not self.pk and instance_with_same_id) or (self.pk and self.pk != instance_with_same_id.pk):
+                raise XOSValidationError("A ENodeB with enbId '%s' already exists" % self.enbId)
+        except self.DoesNotExist:
+            pass
+
+        super(ENodeB, self).save(*args, **kwargs)
 
 
 class Handover(Handover_decl):
