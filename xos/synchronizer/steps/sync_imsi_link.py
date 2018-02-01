@@ -16,13 +16,15 @@
 
 import os
 import sys
-from synchronizers.new_base.SyncInstanceUsingAnsible import SyncInstanceUsingAnsible
+from synchronizers.new_base.SyncInstanceUsingAnsible import SyncStep
 from synchronizers.new_base.ansible_helper import run_template
-from synchronizers.new_base.modelaccessor import MCordSubscriberInstance, ServiceInstanceLink
+from synchronizers.new_base.modelaccessor import MCordSubscriberInstance, ServiceInstanceLink, ProgranServiceInstance
 
 from xosconfig import Config
 from multistructlog import create_logger
 import json
+import requests
+from requests.auth import HTTPBasicAuth
 
 
 log = create_logger(Config().get('logging'))
@@ -32,66 +34,57 @@ sys.path.insert(0, parentdir)
 sys.path.insert(0, os.path.dirname(__file__))
 from helpers import ProgranHelpers
 
-class SyncProgranIMSILink(SyncInstanceUsingAnsible):
+class SyncProgranIMSILink(SyncStep):
     provides = [ServiceInstanceLink]
 
     observes = ServiceInstanceLink
 
-    def skip_ansible_fields(self, o):
-        # FIXME This model does not have an instance, this is a workaroung to make it work,
-        # but it need to be cleaned up creating a general SyncUsingAnsible base class
-        return True
+    # NOTE Override the default fetch_pending method to receive on links between MCordSubscriberInstances and ProgranServiceInstances
+    def fetch_pending(self, deleted):
 
-    def get_progran_imsi_field(self, o):
+        objs = super(SyncProgranIMSILink, self).fetch_pending(deleted)
+        objs = list(objs)
 
-        imsi = {
-            "IMSIRuleArray": [
-                '123' # TODO retrieve it service_instance_link.subscriber_service_instance.imsi_number
-            ]
-        }
-        imsi = json.dumps(imsi)
-        return imsi
+        to_be_sync = []
 
-    def get_extra_attributes(self, o):
+        for link in objs:
+            if link.provider_service_instance.leaf_model_name == "ProgranServiceInstance" and link.subscriber_service_instance.leaf_model_name == "MCordSubscriberInstance":
+                to_be_sync.append(link)
 
-
-        return fields
+        return to_be_sync
 
     def sync_record(self, o):
-        log.info("sync'ing profile", object=str(o), **o.tologdict())
-        # onos = ProgranHelpers.get_progran_onos_info()
-        # profile_name = 'foo' # TODO retrieve it service_instance_link.subscriber_service_instance.imsi_number
-        #
-        # fields = {
-        #     'onos_url': onos['url'],
-        #     'onos_username': onos['username'],
-        #     'onos_password': onos['password'],
-        #     'onos_port': onos['port'],
-        #     'endpoint': 'profile/%s/imsi' % profile_name,
-        #     'body': self.get_progran_imsi_field(o),
-        #     'method': 'POST'
-        # }
-        # fields = {}
-        # self.run_playbook(o, fields)
-        # o.save()
-        print o
 
-    # FIXME we need to override this as the default expect to ssh into a VM
-    def run_playbook(self, o, fields):
-        run_template("progran_curl.yaml", fields, object=o)
+        if o.provider_service_instance.leaf_model_name == "ProgranServiceInstance" and o.subscriber_service_instance.leaf_model_name ==  "MCordSubscriberInstance":
+            log.info("sync'ing link", object=str(o), **o.tologdict())
+
+            onos = ProgranHelpers.get_progran_onos_info()
+
+            profile_name = o.provider_service_instance.name
+            imsi_number =  o.subscriber_service_instance.leaf_model.imsi_number
+
+            data = {
+                "IMSIRuleArray": [
+                    imsi_number
+                ]
+            }
+
+            url = "http://%s:%s/onos/progran/profile/%s/imsi" % (onos['url'], onos['port'], profile_name)
+
+            r = requests.post(url, data=json.dumps(data), auth=HTTPBasicAuth(onos['username'], onos['password']))
+            print r.json()
 
     def delete_record(self, o):
-        log.info("deleting object", object=str(o), **o.tologdict())
-        # onos = ProgranHelpers.get_progran_onos_info()
-        # profile_name = 'foo'
-        # imsi_number = 'bar'
-        # fields = {
-        #     'onos_url': onos['url'],
-        #     'onos_username': onos['username'],
-        #     'onos_password': onos['password'],
-        #     'onos_port': onos['port'],
-        #     'endpoint': 'profile/{profile_name}/{imsi}' % (profile_name, imsi_number),
-        #     'body': '',
-        #     'method': 'DELETE'
-        # }
-        # self.run_playbook(o, fields)
+
+        if o.provider_service_instance.leaf_model_name == "ProgranServiceInstance" and o.subscriber_service_instance.leaf_model_name ==  "MCordSubscriberInstance":
+            log.info("deleting link", object=str(o), **o.tologdict())
+
+            onos = ProgranHelpers.get_progran_onos_info()
+
+            profile_name = o.provider_service_instance.name
+            imsi_number =  o.subscriber_service_instance.leaf_model.imsi_number
+
+            url = "http://%s:%s/onos/progran/profile/%s/%s" % (onos['url'], onos['port'], profile_name, imsi_number)
+
+            r = requests.delete(url, auth=HTTPBasicAuth(onos['username'], onos['password']))
+            print r.json()
