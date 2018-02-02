@@ -15,6 +15,8 @@
 from xosconfig import Config
 from multistructlog import create_logger
 from synchronizers.new_base.modelaccessor import ProgranService
+import time
+import datetime
 
 log = create_logger(Config().get('logging'))
 
@@ -30,7 +32,7 @@ class ProgranHelpers():
         try:
             progran_service = ProgranService.objects.all()[0]
         except IndexError:
-            log.error("Cannot find Progran Service, does it exists?")
+            raise Exception("Cannot find Progran Service, does it exists?")
         return ProgranHelpers.get_onos_info_from_service(progran_service)
 
     @staticmethod
@@ -41,3 +43,43 @@ class ProgranHelpers():
             'username': progran_service.onos_username,
             'password': progran_service.onos_password,
         }
+
+    @staticmethod
+    def get_progran_rest_errors(res):
+        res = res.json()
+        if res['Result'] == -2:
+            raise Exception(res['ErrCode'])
+
+    @staticmethod
+    def date_to_time(d):
+        if len(d) == 0:
+            return 0
+        return time.mktime(datetime.datetime.strptime(d, "%d.%m.%Y %H:%S").timetuple())
+
+    @staticmethod
+    def update_fields(model, dict, mapping={}, transformations={}):
+        dict = ProgranHelpers.convert_keys(dict, mapping, transformations)
+        for k, v in dict.iteritems():
+            if hasattr(model, k):
+                setattr(model, k, v)
+            else:
+                log.warn("%s does not have a '%s' property, not updating it" % (model.model_name, k))
+        return model
+
+    @staticmethod
+    def convert_keys(dict, mapping={}, transformations={}):
+        for k, v in dict.iteritems():
+            if k in mapping:
+                # apply custom transformations to the data
+                if k in transformations:
+                    dict[k] = transformations[k](v)
+
+                # NOTE we may have different names that the field in the dict
+                dict[mapping[k]] = dict[k]
+                del dict[k]
+        return dict
+
+    @staticmethod
+    def list_diff(first, second):
+        second = set(second)
+        return [item for item in first if item not in second]
