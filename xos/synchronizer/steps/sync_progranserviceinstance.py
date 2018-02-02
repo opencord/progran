@@ -16,13 +16,15 @@
 
 import os
 import sys
-from synchronizers.new_base.SyncInstanceUsingAnsible import SyncInstanceUsingAnsible
+from synchronizers.new_base.SyncInstanceUsingAnsible import SyncStep
 from synchronizers.new_base.ansible_helper import run_template
 from synchronizers.new_base.modelaccessor import ProgranServiceInstance, ENodeB
 
 from xosconfig import Config
 from multistructlog import create_logger
 import json
+import requests
+from requests.auth import HTTPBasicAuth
 
 
 log = create_logger(Config().get('logging'))
@@ -32,15 +34,44 @@ sys.path.insert(0, parentdir)
 sys.path.insert(0, os.path.dirname(__file__))
 from helpers import ProgranHelpers
 
-class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
+class SyncProgranServiceInstance(SyncStep):
     provides = [ProgranServiceInstance]
 
     observes = ProgranServiceInstance
 
-    def skip_ansible_fields(self, o):
-        # FIXME This model does not have an instance, this is a workaroung to make it work,
-        # but it need to be cleaned up creating a general SyncUsingAnsible base class
-        return True
+    def sync_record(self, o):
+        onos = ProgranHelpers.get_progran_onos_info()
+
+        log.info("sync'ing profile", object=str(o), **o.tologdict())
+
+        profile_url = "http://%s:%s/onos/progran/profile/" % (onos['url'], onos['port'])
+        data = self.get_progran_profile_field(o)
+
+        r = requests.post(profile_url, data=json.dumps(data), auth=HTTPBasicAuth(onos['username'], onos['password']))
+        log.info("Profile synchronized", response=r.json())
+
+        log.info("sync'ing enodeb", object=str(o), **o.tologdict())
+        if o.enodeb_id:
+            log.info("adding profile %s to enodeb %s" % (o.id, o.enodeb.enbId), object=str(o), **o.tologdict())
+            enodeb_url = "http://%s:%s/onos/progran/enodeb/%s/profile" % (onos['url'], onos['port'], o.enodeb.enbId)
+            data = {
+                "ProfileArray": [
+                    o.name
+                ]
+            }
+            r = requests.post(enodeb_url, data=json.dumps(data), auth=HTTPBasicAuth(onos['username'], onos['password']))
+            o.active_enodeb_id = o.enodeb_id # storing the value to know when it will be deleted
+            log.info("EnodeB synchronized", response=r.json())
+        elif o.active_enodeb_id:
+            enb_id = ENodeB.objects.get(id=o.active_enodeb_id).enbId
+            log.info("removing profile %s from enodeb %s" % (o.name, o.active_enodeb_id), object=str(o), **o.tologdict())
+            enodeb_url = "http://%s:%s/onos/progran/enodeb/%s/profile/%s" % (onos['url'], onos['port'], enb_id, o.name)
+            r = requests.delete(enodeb_url, auth=HTTPBasicAuth(onos['username'], onos['password']))
+            o.active_enodeb_id = 0 # removing the value because it has been deleted
+            log.info("EnodeB synchronized", response=r.json())
+
+        o.save()
+
 
     def get_handover_for_profile(self, o):
         return {
@@ -74,85 +105,13 @@ class SyncProgranServiceInstance(SyncInstanceUsingAnsible):
             'DlWifiRate': o.DlWifiRate,
             'DlUeAllocRbRate': o.DlUeAllocRbRate,
         }
-        profile = json.dumps(profile)
+
         return profile
 
-    def sync_record(self, o):
-        # NOTE overriding the default sync_record as we need to execute the playbook 2 times (profile and enodeb)
-
-        log.info("sync'ing profile", object=str(o), **o.tologdict())
-        onos = ProgranHelpers.get_onos_info_from_si(o)
-
-        # common field for both operations
-        base_field = {
-            'onos_url': onos['url'],
-            'onos_username': onos['username'],
-            'onos_password': onos['password'],
-            'onos_port': onos['port'],
-        }
-
-        # progran profile specific fields
-        profile_fields = {
-            'endpoint': 'profile',
-            'body': self.get_progran_profile_field(o),
-            'method': 'POST'
-        }
-        profile_fields["ansible_tag"] = getattr(o, "ansible_tag", o.__class__.__name__ + "_" + str(o.id))
-        profile_fields.update(base_field)
-        self.run_playbook(o, profile_fields)
-
-        # import pdb; pdb.set_trace()
-
-        # progran enodeb specific fields
-        if o.enodeb_id:
-            log.info("adding profile %s to enodeb %s" % (o.id, o.enodeb.enbId), object=str(o), **o.tologdict())
-            enodeb_fields = {
-                'body': json.dumps({
-                    "ProfileArray": [
-                        o.name
-                    ]
-                }),
-                'method': 'POST',
-                'endpoint': 'enodeb/%s/profile' % o.enodeb.enbId
-            }
-            enodeb_fields["ansible_tag"] =  o.__class__.__name__ + "_" + str(o.id) + "_enodeb_to_profile"
-            enodeb_fields.update(base_field)
-            self.run_playbook(o, enodeb_fields)
-
-            o.active_enodeb_id = o.enodeb_id
-
-        elif o.active_enodeb_id:
-
-            enb_id = ENodeB.objects.get(id=o.active_enodeb_id).enbId
-
-            log.info("removing profile %s from enodeb %s" % (o.name, o.active_enodeb_id), object=str(o), **o.tologdict())
-            enodeb_fields = {
-                'body': '',
-                'method': 'DELETE',
-                'endpoint': 'enodeb/%s/profile/%s' % (enb_id, o.name)
-            }
-            enodeb_fields["ansible_tag"] = o.__class__.__name__ + "_" + str(o.id) + "_rm_enodeb_from_profile"
-            enodeb_fields.update(base_field)
-            self.run_playbook(o, enodeb_fields)
-            o.active_enodeb_id = 0
-
-        o.save()
-
-
-    # FIXME we need to override this as the default expect to ssh into a VM
-    def run_playbook(self, o, fields):
-        run_template("progran_curl.yaml", fields, object=o)
-
     def delete_record(self, o):
-        log.info("deleting object", object=str(o), **o.tologdict())
+        log.info("deleting profile", object=str(o), **o.tologdict())
         onos = ProgranHelpers.get_onos_info_from_si(o)
-        fields = {
-            'onos_url': onos['url'],
-            'onos_username': onos['username'],
-            'onos_password': onos['password'],
-            'onos_port': onos['port'],
-            'endpoint': 'profile/%s' % o.name,
-            'body': '',
-            'method': 'DELETE'
-        }
-        res = self.run_playbook(o, fields)
+        profile_url = "http://%s:%s/onos/progran/profile/%s" % (onos['url'], onos['port'], o.name)
+        r = requests.delete(profile_url, auth=HTTPBasicAuth(onos['username'], onos['password']))
+        o.active_enodeb_id = 0  # removing the value because it has been deleted
+        log.info("Profile synchronized", response=r.json())
