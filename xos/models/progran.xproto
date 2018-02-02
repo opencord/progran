@@ -48,9 +48,10 @@ message ProgranServiceInstance (ServiceInstance){
     required int32 DlWifiRate = 11 [default = 100, db_index = False, null = False, blank = False];
     required int32 DlUeAllocRbRate = 12 [default = 100, db_index = False, null = False, blank = False];
     required string SubsProfile = 13 [ db_index = False, null = True, blank = True];
-    optional manytoone enodeb->ENodeB:profiles = 14 [null = True, blank = True];
-    required manytoone handover->Handover:profiles = 15 [null = False, blank = False];
-    optional int32 active_enodeb_id = 16 [null = True, blank = True, gui_hidden = True];
+    optional bool Status = 14 [ db_index = False, null = False, blank = True, default = False];
+    optional manytoone enodeb->ENodeB:profiles = 15 [null = True, blank = True];
+    required manytoone handover->Handover:profiles = 16 [null = False, blank = False];
+    optional int32 active_enodeb_id = 17 [null = True, blank = True, gui_hidden = True];
 }
 
 
