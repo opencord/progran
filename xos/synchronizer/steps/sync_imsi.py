@@ -79,9 +79,9 @@ class SyncProgranIMSI(SyncInstanceUsingAnsible):
 
         # fetch the IMSI we just created
         # NOTE we won't need this method once we'll have polling in place
-        imsi_url = "http://%s:%s/onos/progran/imsi/%s" % (base_fields['onos_url'], base_fields['onos_port'], o.imsi_number)
-        r = requests.get(imsi_url)
-        o.ue_status = r.json()['ImsiArray'][0]['UeStatus']
+        # imsi_url = "http://%s:%s/onos/progran/imsi/%s" % (base_fields['onos_url'], base_fields['onos_port'], o.imsi_number)
+        # r = requests.get(imsi_url)
+        # o.ue_status = r.json()['ImsiArray'][0]['UeStatus']
 
         o.save()
 
