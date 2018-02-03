@@ -103,7 +103,6 @@ class SyncProgranServiceInstanceBack(SyncStep):
                 log.info("Profile %s already exists, updating it" % p['Name'])
             except IndexError:
                 si = ProgranServiceInstance()
-                si.name = p['Name']
 
                 si.no_sync = True
 
