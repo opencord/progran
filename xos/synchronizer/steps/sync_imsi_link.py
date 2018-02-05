@@ -16,8 +16,7 @@
 
 import os
 import sys
-from synchronizers.new_base.SyncInstanceUsingAnsible import SyncStep
-from synchronizers.new_base.ansible_helper import run_template
+from synchronizers.new_base.syncstep import SyncStep
 from synchronizers.new_base.modelaccessor import MCordSubscriberInstance, ServiceInstanceLink, ProgranServiceInstance
 
 from xosconfig import Config
@@ -72,7 +71,7 @@ class SyncProgranIMSILink(SyncStep):
             url = "http://%s:%s/onos/progran/profile/%s/imsi" % (onos['url'], onos['port'], profile_name)
 
             r = requests.post(url, data=json.dumps(data), auth=HTTPBasicAuth(onos['username'], onos['password']))
-            print r.json()
+            ProgranHelpers.get_progran_rest_errors(r)
 
     def delete_record(self, o):
 
@@ -87,4 +86,4 @@ class SyncProgranIMSILink(SyncStep):
             url = "http://%s:%s/onos/progran/profile/%s/%s" % (onos['url'], onos['port'], profile_name, imsi_number)
 
             r = requests.delete(url, auth=HTTPBasicAuth(onos['username'], onos['password']))
-            print r.json()
+            ProgranHelpers.get_progran_rest_errors(r)

@@ -20,7 +20,7 @@ import sys
 import datetime
 import time
 
-from synchronizers.new_base.SyncInstanceUsingAnsible import SyncStep
+from synchronizers.new_base.syncstep import SyncStep
 from synchronizers.new_base.modelaccessor import ProgranServiceInstance, ENodeB, Handover
 
 from xosconfig import Config
@@ -53,11 +53,13 @@ class SyncProgranServiceInstanceBack(SyncStep):
             # NOTE we won't it to run only after the delete has completed
             return
 
-        log.info("Reading profiles from progran")
+        log.debug("Reading profiles from progran")
         onos = ProgranHelpers.get_progran_onos_info()
         profile_url = "http://%s:%s/onos/progran/profile/" % (onos['url'], onos['port'])
         r = requests.get(profile_url, auth=HTTPBasicAuth(onos['username'], onos['password']))
         res = r.json()['ProfileArray']
+
+        log.debug("Received Profiles: ", profiles=res)
 
         # remove default profiles
         res = [p for p in res if "Default" not in p['Name']]
@@ -82,34 +84,43 @@ class SyncProgranServiceInstanceBack(SyncStep):
 
         for p in res:
 
+
+            # checking for profiles
+            try:
+                si = ProgranServiceInstance.objects.get(name=p['Name'])
+                log.debug("Profile %s already exists, updating it" % p['Name'])
+            except IndexError:
+                si = ProgranServiceInstance()
+
+                si.no_sync = True
+                si.created_by = "Progran"
+
+                log.debug("Profile %s is new, creating it" % p['Name'])
+
+            si = ProgranHelpers.update_fields(si, p, field_mapping, field_transformations)
+
             # checking for handovers
             handover_dict = p['Handover']
             handover_dict = ProgranHelpers.convert_keys(handover_dict, handover_mapping)
             del p['Handover']
 
-            try:
-                handover = Handover.objects.get(**handover_dict)
-                log.info("handover already exists, updating it", handover=handover_dict)
-            except IndexError:
+            if si.handover_id:
+                handover = si.handover
+                log.debug("handover already exists, updating it", handover=handover_dict)
+            else:
                 handover = Handover()
                 handover = ProgranHelpers.update_fields(handover, handover_dict)
-                log.info("handover is new, creating it", handover=handover_dict)
+                log.debug("handover is new, creating it", handover=handover_dict)
+                handover.created_by = "Progran"
 
+            handover = ProgranHelpers.update_fields(handover, handover_dict)
             handover.save()
 
-            # checking for profiles
-            try:
-                si = ProgranServiceInstance.objects.get(name=p['Name'])
-                log.info("Profile %s already exists, updating it" % p['Name'])
-            except IndexError:
-                si = ProgranServiceInstance()
-
-                si.no_sync = True
-
-                log.info("Profile %s is new, creating it" % p['Name'])
-
-            si = ProgranHelpers.update_fields(si, p, field_mapping, field_transformations)
+            # Assigning handover to profile
             si.handover = handover
+
+            si.backend_status = "OK"
+            si.backend_code = 1
 
             si.save()
 
@@ -119,7 +130,10 @@ class SyncProgranServiceInstanceBack(SyncStep):
         deleted_profiles = ProgranHelpers.list_diff(existing_profiles, updated_profiles)
 
         if len(deleted_profiles) > 0:
-            log.info("Profiles %s have been removed in progran, removing them from XOS" % str(deleted_profiles))
+            log.debug("Profiles %s have been removed in progran, removing them from XOS" % str(deleted_profiles))
             for p in deleted_profiles:
                 si = ProgranServiceInstance.objects.get(name=p)
+                if si.created_by == 'XOS' and si.previously_sync == False:
+                    # don't delete if the profile has been created by XOS and it hasn't been sync'ed yet
+                    continue
                 si.delete()
