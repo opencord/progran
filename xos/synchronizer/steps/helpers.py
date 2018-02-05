@@ -47,7 +47,8 @@ class ProgranHelpers():
     @staticmethod
     def get_progran_rest_errors(res):
         res = res.json()
-        if res['Result'] == -2:
+        if res['Result'] == -2 or res['Result'] == -1:
+            log.error('Error from ONOS Progran', error=res)
             raise Exception(res['ErrCode'])
 
     @staticmethod
@@ -62,8 +63,8 @@ class ProgranHelpers():
         for k, v in dict.iteritems():
             if hasattr(model, k):
                 setattr(model, k, v)
-            else:
-                log.warn("%s does not have a '%s' property, not updating it" % (model.model_name, k))
+            # else:
+            #     log.debug("%s does not have a '%s' property, not updating it" % (model.model_name, k))
         return model
 
     @staticmethod

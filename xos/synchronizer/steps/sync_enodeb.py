@@ -16,14 +16,14 @@
 
 import os
 import sys
-from synchronizers.new_base.SyncInstanceUsingAnsible import SyncInstanceUsingAnsible
-from synchronizers.new_base.ansible_helper import run_template
+from synchronizers.new_base.SyncInstanceUsingAnsible import SyncStep
 from synchronizers.new_base.modelaccessor import ENodeB
 
 from xosconfig import Config
 from multistructlog import create_logger
 import json
-
+import requests
+from requests.auth import HTTPBasicAuth
 
 log = create_logger(Config().get('logging'))
 
@@ -34,15 +34,10 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from helpers import ProgranHelpers
 
-class SyncProgranEnodeB(SyncInstanceUsingAnsible):
+class SyncProgranEnodeB(SyncStep):
     provides = [ENodeB]
 
     observes = ENodeB
-
-    def skip_ansible_fields(self, o):
-        # FIXME This model does not have an instance, this is a workaroung to make it work,
-        # but it need to be cleaned up creating a general SyncUsingAnsible base class
-        return True
 
     def get_progran_enodeb_field(self, o):
 
@@ -51,37 +46,35 @@ class SyncProgranEnodeB(SyncInstanceUsingAnsible):
 	        "Description": o.description,
 	        "IpAddr": o.ipAddr
         }
-        enodeb = json.dumps(enodeb)
         return enodeb
 
-    def get_extra_attributes(self, o):
+    def sync_record(self, o):
+        log.info("sync'ing enodeb", object=str(o), **o.tologdict())
+
         onos = ProgranHelpers.get_progran_onos_info()
-        fields = {
-            'onos_url': onos['url'],
-            'onos_username': onos['username'],
-            'onos_password': onos['password'],
-            'onos_port': onos['port'],
-            'endpoint': 'enodeb',
-            'body': self.get_progran_enodeb_field(o),
-            'method': 'POST'
-        }
 
-        return fields
+        enodeb_url = "http://%s:%s/onos/progran/enodeb/" % (onos['url'], onos['port'])
+        data = self.get_progran_enodeb_field(o)
+        log.debug("Sync'ing enodeb with data", request_data=data)
 
-    # FIXME we need to override this as the default expect to ssh into a VM
-    def run_playbook(self, o, fields):
-        run_template("progran_curl.yaml", fields, object=o)
+        if o.previously_sync == False:
+            log.debug("Sending POST")
+            r = requests.post(enodeb_url, data=json.dumps(data), auth=HTTPBasicAuth(onos['username'], onos['password']))
+        else:
+            log.debug("Sending PUT")
+            r = requests.put(enodeb_url, data=json.dumps(data),
+                              auth=HTTPBasicAuth(onos['username'], onos['password']))
+
+        ProgranHelpers.get_progran_rest_errors(r)
+        log.info("Enodeb synchronized", response=r.json())
+
+        o.previously_sync = True
+        o.save()
 
     def delete_record(self, o):
-        log.info("deleting object", object=str(o), **o.tologdict())
+        log.info("deleting enodeb", object=str(o), **o.tologdict())
         onos = ProgranHelpers.get_progran_onos_info()
-        fields = {
-            'onos_url': onos['url'],
-            'onos_username': onos['username'],
-            'onos_password': onos['password'],
-            'onos_port': onos['port'],
-            'endpoint': 'enodeb/%s' % o.enbId,
-            'profile': '',
-            'method': 'DELETE'
-        }
-        res = self.run_playbook(o, fields)
+        enode_url = "http://%s:%s/onos/progran/enodeb/%s" % (onos['url'], onos['port'], o.enbId)
+        r = requests.delete(enode_url, auth=HTTPBasicAuth(onos['username'], onos['password']))
+        ProgranHelpers.get_progran_rest_errors(r)
+        log.info("enodeb deleted", response=r.json())

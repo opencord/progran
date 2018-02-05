@@ -16,14 +16,14 @@
 
 import os
 import sys
-from synchronizers.new_base.SyncInstanceUsingAnsible import SyncInstanceUsingAnsible
-from synchronizers.new_base.ansible_helper import run_template
+from synchronizers.new_base.SyncInstanceUsingAnsible import SyncStep
 from synchronizers.new_base.modelaccessor import MCordSubscriberInstance
 
 from xosconfig import Config
 from multistructlog import create_logger
 import json
 import requests
+from requests.auth import HTTPBasicAuth
 
 
 log = create_logger(Config().get('logging'))
@@ -33,72 +33,32 @@ sys.path.insert(0, parentdir)
 sys.path.insert(0, os.path.dirname(__file__))
 from helpers import ProgranHelpers
 
-class SyncProgranIMSI(SyncInstanceUsingAnsible):
+class SyncProgranIMSI(SyncStep):
     provides = [MCordSubscriberInstance]
 
     observes = MCordSubscriberInstance
-
-    def skip_ansible_fields(self, o):
-        # FIXME This model does not have an instance, this is a workaroung to make it work,
-        # but it need to be cleaned up creating a general SyncUsingAnsible base class
-        return True
 
     def get_progran_imsi_field(self, o):
 
         imsi = {
             "IMSI": o.imsi_number,
         }
-        imsi = json.dumps(imsi)
         return imsi
 
-    def get_fields(self, o):
-        onos = ProgranHelpers.get_progran_onos_info()
-        fields = {
-            'onos_url': onos['url'],
-            'onos_username': onos['username'],
-            'onos_password': onos['password'],
-            'onos_port': onos['port'],
-        }
-
-        return fields
-
     def sync_record(self, o):
-        # NOTE overriding the default method as we need to read from progran
-        base_fields = self.get_fields(o)
+        log.info("sync'ing imsi", object=str(o), **o.tologdict())
+        onos = ProgranHelpers.get_progran_onos_info()
+        imsi_url = "http://%s:%s/onos/progran/imsi/" % (onos['url'], onos['port'])
+        data = self.get_progran_imsi_field(o)
+        r = requests.post(imsi_url, data=json.dumps(data), auth=HTTPBasicAuth(onos['username'], onos['password']))
 
-        create_fields = {
-            'endpoint': 'imsi',
-            'body': self.get_progran_imsi_field(o),
-            'method': 'POST'
-        }
-
-        create_fields["ansible_tag"] = getattr(o, "ansible_tag", o.__class__.__name__ + "_" + str(o.id))
-        create_fields.update(base_fields)
-
-        self.run_playbook(o, create_fields)
-
-        # fetch the IMSI we just created
-        # NOTE we won't need this method once we'll have polling in place
-        # imsi_url = "http://%s:%s/onos/progran/imsi/%s" % (base_fields['onos_url'], base_fields['onos_port'], o.imsi_number)
-        # r = requests.get(imsi_url)
-        # o.ue_status = r.json()['ImsiArray'][0]['UeStatus']
-
-        o.save()
-
-    # FIXME we need to override this as the default expect to ssh into a VM
-    def run_playbook(self, o, fields):
-        return run_template("progran_curl.yaml", fields, object=o)
+        ProgranHelpers.get_progran_rest_errors(r)
+        log.info("Profile synchronized", response=r.json())
 
     def delete_record(self, o):
-        log.info("deleting object", object=str(o), **o.tologdict())
-        onos = ProgranHelpers.get_progran_onos_info()
-        fields = {
-            'onos_url': onos['url'],
-            'onos_username': onos['username'],
-            'onos_password': onos['password'],
-            'onos_port': onos['port'],
-            'endpoint': 'imsi/%s' % o.imsi_number,
-            'body': '',
-            'method': 'DELETE'
-        }
-        res = self.run_playbook(o, fields)
+        log.info("deleting imsi", object=str(o), **o.tologdict())
+        onos = ProgranHelpers.get_onos_info_from_si(o)
+        profile_url = "http://%s:%s/onos/progran/imsi/%s" % (onos['url'], onos['port'], o.imsi_number)
+        r = requests.delete(profile_url, auth=HTTPBasicAuth(onos['username'], onos['password']))
+        o.active_enodeb_id = 0  # removing the value because it has been deleted
+        log.info("IMSI synchronized", response=r.json())

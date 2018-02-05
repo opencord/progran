@@ -27,7 +27,7 @@ required_models:
 dependency_graph: "/opt/xos/synchronizers/progran/model_deps"
 steps_dir: "/opt/xos/synchronizers/progran/steps"
 sys_dir: "/opt/xos/synchronizers/progran/sys"
-# model_policies_dir: "/opt/xos/synchronizers/progran/model_policies"
+#model_policies_dir: "/opt/xos/synchronizers/progran/model_policies"
 
 
 keep_temp_files: True
@@ -47,4 +47,4 @@ logging:
       handlers:
           - console
           - file
-      level: DEBUG
+      level: INFO

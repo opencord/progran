@@ -15,6 +15,8 @@ message ENodeB (XOSBase){
     required string description = 1 [db_index = False, max_length = 256, null = False, blank = False];
     required string enbId = 2 [help_text = "ID of this enodeb", db_index = False, max_length = 256, null = False, blank = False];
     required string ipAddr = 3 [help_text = "IP address of this enodeb", db_index = False, max_length = 256, null = False, blank = False];
+    optional string created_by = 4 [null = True, blank = True, gui_hidden = True];
+    optional bool previously_sync = 5 [null = False, blank = True, default=False, gui_hidden = True];
 }
 
 message Handover (XOSBase){
@@ -29,6 +31,7 @@ message Handover (XOSBase){
     required int32 A5Thresh2Rsrq = 8 [default = -8, db_index = False, null = False, blank = False];
     required int32 HysteresisA5 = 9 [default = 1, db_index = False, null = False, blank = False];
     required int32 A5TriggerQuantity = 10 [default = 0, db_index = False, null = False, blank = False];
+    optional string created_by = 11 [null = True, blank = True, gui_hidden = True];
 }
 
 message ProgranServiceInstance (ServiceInstance){
@@ -52,6 +55,8 @@ message ProgranServiceInstance (ServiceInstance){
     optional manytoone enodeb->ENodeB:profiles = 15 [null = True, blank = True];
     required manytoone handover->Handover:profiles = 16 [null = False, blank = False];
     optional int32 active_enodeb_id = 17 [null = True, blank = True, gui_hidden = True];
+    optional string created_by = 17 [null = True, blank = True, gui_hidden = True];
+    optional bool previously_sync = 18 [null = False, blank = True, default=False, gui_hidden = True];
 }
 
 

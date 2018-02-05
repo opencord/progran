@@ -3,11 +3,11 @@ version: '2'
 
 services:
    progran:
-      image: cemturker/prograncontrollermcord:0.1.2
+      image: cemturker/prograncontrollermcord:0.1.5
       ports:
        - "221:22"
        - "6655:6653"
        - "8103:8101"
        - "8183:8181"
-       - "9877:9876"
+       - "9878:9876"
        - "4010:4010"

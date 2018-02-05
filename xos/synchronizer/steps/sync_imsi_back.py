@@ -53,14 +53,13 @@ class SyncImsiBack(SyncStep):
             # NOTE we won't it to run only after the delete has completed
             return
 
-        log.info("Reading IMSI from progran")
+        log.debug("Reading IMSI from progran")
         onos = ProgranHelpers.get_progran_onos_info()
         imsi_url = "http://%s:%s/onos/progran/imsi/" % (onos['url'], onos['port'])
         r = requests.get(imsi_url, auth=HTTPBasicAuth(onos['username'], onos['password']))
         res = r.json()['ImsiArray']
 
-        print res
-
+        log.debug("Received IMSIs: ", imsis=res)
 
         field_mapping = {
             'IMSI': 'imsi_number',
@@ -70,18 +69,18 @@ class SyncImsiBack(SyncStep):
         updated_imsi = []
 
         for i in res:
-            # imsi for profiles
             try:
                 si = MCordSubscriberInstance.objects.get(imsi_number=i['IMSI'])
-                log.info("IMSI %s already exists, updating it" % i['IMSI'])
+                log.debug("IMSI %s already exists, updating it" % i['IMSI'])
             except IndexError:
                 si = MCordSubscriberInstance()
 
                 si.no_sync = True
                 si.backend_code = 1
                 si.backend_status = "OK"
+                si.created_by = "Progran"
 
-                log.info("IMSI %s is new, creating it" % i['IMSI'])
+                log.debug("IMSI %s is new, creating it" % i['IMSI'])
 
             si = ProgranHelpers.update_fields(si, i, field_mapping,)
 
@@ -93,7 +92,10 @@ class SyncImsiBack(SyncStep):
         deleted_imsi = ProgranHelpers.list_diff(existing_imsi, updated_imsi)
 
         if len(deleted_imsi) > 0:
-            log.info("Profiles %s have been removed in progran, removing them from XOS" % str(deleted_imsi))
+            log.debug("Profiles %s have been removed in progran, removing them from XOS" % str(deleted_imsi))
             for p in deleted_imsi:
                 si = MCordSubscriberInstance.objects.get(imsi_number=p)
+                # if si.created_by == 'XOS' and si.previously_sync == False:
+                    # don't delete if the imsi has been created by XOS and it hasn't been sync'ed yet
+                    # continue
                 si.delete()
