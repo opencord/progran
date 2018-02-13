@@ -21,14 +21,14 @@ message ENodeB (XOSBase){
 
 message Handover (XOSBase){
     option verbose_name = "Handover";
-    required int32 A3offset = 1 [default = 2, db_index = False, null = False, blank = False];
-    required int32 HysteresisA3 = 2 [default = 1, db_index = False, null = False, blank = False];
+    required int32 A3offset = 1 [default = 1, db_index = False, null = False, blank = False];
+    required int32 HysteresisA3 = 2 [default = 0, db_index = False, null = False, blank = False];
     required int32 A3TriggerQuantity = 3 [default = 0, db_index = False, null = False, blank = False];
     required int32 A5TriggerType = 4 [default = 0, db_index = False, null = False, blank = False];
-    required int32 A5Thresh1Rsrp = 5 [default = -97, db_index = False, null = False, blank = False];
-    required int32 A5Thresh1Rsrq = 6 [default = -10, db_index = False, null = False, blank = False];
-    required int32 A5Thresh2Rsrp = 7 [default = -95, db_index = False, null = False, blank = False];
-    required int32 A5Thresh2Rsrq = 8 [default = -8, db_index = False, null = False, blank = False];
+    required int32 A5Thresh1Rsrp = 5 [default = 74, db_index = False, null = False, blank = False];
+    required int32 A5Thresh1Rsrq = 6 [default = 10, db_index = False, null = False, blank = False];
+    required int32 A5Thresh2Rsrp = 7 [default = 78, db_index = False, null = False, blank = False];
+    required int32 A5Thresh2Rsrq = 8 [default = 10, db_index = False, null = False, blank = False];
     required int32 HysteresisA5 = 9 [default = 1, db_index = False, null = False, blank = False];
     required int32 A5TriggerQuantity = 10 [default = 0, db_index = False, null = False, blank = False];
     optional string created_by = 11 [null = True, blank = True, gui_hidden = True];
@@ -38,18 +38,18 @@ message ProgranServiceInstance (ServiceInstance){
     option verbose_name = "Progran Service Instance";
     option description = "Represent a Profile in the Progran ONOS Application";
 
-    required string DlSchedType = 1 [default = "vm", choices = "(('RR', 'Round Robin'),)", max_length = 30, blank = False, null = False, db_index = False];
-    required int32 DlAllocRBRate = 2 [db_index = False, null = False, blank = False];
-    required string UlSchedType = 3 [default = "vm", choices = "(('RR', 'Round Robin'),)", max_length = 30, blank = False, null = False, db_index = False];
-    required int32 UlAllocRBRate = 4 [db_index = False, null = False, blank = False];
+    required string DlSchedType = 1 [default = "RR", choices = "(('RR', 'Round Robin'), ('PF', 'Proportional Fairness'), ('MAXCI', 'Maximum C/I'))", max_length = 30, blank = False, null = False, db_index = False];
+    required int32 DlAllocRBRate = 2 [default = "0", db_index = False, null = False, blank = False];
+    required string UlSchedType = 3 [default = "RR", choices = "(('RR', 'Round Robin'), ('PF', 'Proportional Fairness'), ('MAXCI', 'Maximum C/I'))", max_length = 30, blank = False, null = False, db_index = False];
+    required int32 UlAllocRBRate = 4 [default = "0", db_index = False, null = False, blank = False];
     required string start = 5 [content_type = "date", null = True, blank = True];
     required string end = 6 [content_type = "date", null = True, blank = True];
     required int32 AdmControl = 7 [default = "0", choices = "(('0', 'ALL'), ('1', 'Voice Only'), ('2', 'Data Only'))", blank = False, null = False, db_index = False];
     required int32 CellIndividualOffset = 8 [db_index = False, null = False, blank = False];
-    required string mmeip = 9 [db_index = False, max_length = 256, null = False, blank = False];
-    required string mmeport = 10 [db_index = False, max_length = 256, null = False, blank = False];
+    required string mmeip = 9 [db_index = False, default = "0.0.0.0", max_length = 256, null = False, blank = False];
+    required string mmeport = 10 [db_index = False, default = "8080", max_length = 256, null = False, blank = False];
     required int32 DlWifiRate = 11 [default = 100, db_index = False, null = False, blank = False];
-    required int32 DlUeAllocRbRate = 12 [default = 100, db_index = False, null = False, blank = False];
+    required int32 DlUeAllocRbRate = 12 [default = "0", help_text = "DL Per UE allocation", db_index = False, null = True, blank = True];
     required string SubsProfile = 13 [ db_index = False, null = True, blank = True];
     optional bool Status = 14 [ db_index = False, null = False, blank = True, default = False];
     optional manytoone enodeb->ENodeB:profiles = 15 [null = True, blank = True];

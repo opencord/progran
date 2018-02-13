@@ -25,7 +25,6 @@ from synchronizers.new_base.modelaccessor import ProgranServiceInstance, ENodeB,
 
 from xosconfig import Config
 from multistructlog import create_logger
-import json
 import requests
 from requests.auth import HTTPBasicAuth
 
@@ -89,6 +88,13 @@ class SyncProgranServiceInstanceBack(SyncStep):
             try:
                 si = ProgranServiceInstance.objects.get(name=p['Name'])
                 log.debug("Profile %s already exists, updating it" % p['Name'])
+
+                # if the model has not been synchronizer yet, skip it
+                if si.no_sync is True:
+                    log.info("Skipping profile %s as not synchronized" % p['Name'])
+                    # NOTE add it to the removed profiles to avoid deletion (this is ugly, I know)
+                    updated_profiles.append(si.name)
+                    continue
             except IndexError:
                 si = ProgranServiceInstance()
 
@@ -124,6 +130,8 @@ class SyncProgranServiceInstanceBack(SyncStep):
             si.no_sync = True
             si.previously_sync = True
 
+            si.enacted = time.mktime(datetime.datetime.now().timetuple())
+
             si.save()
 
             updated_profiles.append(si.name)
@@ -138,4 +146,5 @@ class SyncProgranServiceInstanceBack(SyncStep):
                 if si.created_by == 'XOS' and si.previously_sync == False:
                     # don't delete if the profile has been created by XOS and it hasn't been sync'ed yet
                     continue
+                # TODO delete also the associated Handover
                 si.delete()
