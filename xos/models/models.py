@@ -75,6 +75,9 @@ class ProgranServiceInstance(ProgranServiceInstance_decl):
         proxy = True
 
     def save(self, *args, **kwargs):
+
+        # TODO we should not allow name changes as name is the mapping with the backend
+
         # NOTE someone is setting owner_id, so just override it for now
         try:
             # NOTE we allow just one ProgranService
@@ -82,6 +85,14 @@ class ProgranServiceInstance(ProgranServiceInstance_decl):
             self.owner_id = progran_service.id
         except IndexError:
             raise XOSValidationError("Service Progran cannot be found, please make sure that the model exists.")
+
+        # name is mandatory
+        if not self.name:
+            raise XOSValidationError("name is mandatory for ProgranServiceInstances")
+
+        # NOTE this check is disabled as when Progran create a profile it fails
+        # if self.DlUeAllocRbRate > self.DlAllocRBRate:
+        #     raise XOSValidationError("DlUeAllocRbRate (%s) cannot be bigger than DlAllocRBRate (%s)" % (self.DlUeAllocRbRate, self.DlAllocRBRate))
 
         # prevent name duplicates
         try:
@@ -115,6 +126,17 @@ class ProgranServiceInstance(ProgranServiceInstance_decl):
 
             if total_down > limit:
                 raise XOSValidationError("DlAllocRBRate for the enodeb associated with this profile is greater than %s" % limit)
+
+        caller_kind = "xos"
+
+        if "caller_kind" in kwargs:
+            caller_kind = kwargs.pop("caller_kind")
+
+        print "Profile %s has been saved by %s" % (self.name, caller_kind)
+
+        if caller_kind == "xos":
+            print "Setting no_sync to false for profile %s" % self.name
+            self.no_sync = False
 
         super(ProgranServiceInstance, self).save(*args, **kwargs)
 
