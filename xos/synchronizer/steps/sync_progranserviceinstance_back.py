@@ -92,7 +92,6 @@ class SyncProgranServiceInstanceBack(SyncStep):
             except IndexError:
                 si = ProgranServiceInstance()
 
-                si.no_sync = True
                 si.created_by = "Progran"
 
                 log.debug("Profile %s is new, creating it" % p['Name'])
@@ -121,6 +120,9 @@ class SyncProgranServiceInstanceBack(SyncStep):
 
             si.backend_status = "OK"
             si.backend_code = 1
+
+            si.no_sync = True
+            si.previously_sync = True
 
             si.save()
 
