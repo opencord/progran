@@ -47,4 +47,4 @@ logging:
       handlers:
           - console
           - file
-      level: INFO
+      level: DEBUG

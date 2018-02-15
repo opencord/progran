@@ -21,7 +21,7 @@ import datetime
 import time
 
 from synchronizers.new_base.syncstep import SyncStep
-from synchronizers.new_base.modelaccessor import ProgranServiceInstance, ENodeB, Handover
+from synchronizers.new_base.modelaccessor import ProgranServiceInstance, ENodeB, Handover, ServiceInstanceLink, MCordSubscriberInstance
 
 from xosconfig import Config
 from multistructlog import create_logger
@@ -89,18 +89,50 @@ class SyncProgranServiceInstanceBack(SyncStep):
                 si = ProgranServiceInstance.objects.get(name=p['Name'])
                 log.debug("Profile %s already exists, updating it" % p['Name'])
 
-                # if the model has not been synchronizer yet, skip it
-                if si.no_sync is True:
-                    log.info("Skipping profile %s as not synchronized" % p['Name'])
-                    # NOTE add it to the removed profiles to avoid deletion (this is ugly, I know)
-                    updated_profiles.append(si.name)
-                    continue
             except IndexError:
                 si = ProgranServiceInstance()
 
                 si.created_by = "Progran"
 
                 log.debug("Profile %s is new, creating it" % p['Name'])
+
+            if not si.is_new:
+                # update IMSI association
+                xos_imsis_for_profile = [i.subscriber_service_instance.leaf_model for i in si.provided_links.all()]
+                progran_imsis_for_profile = p['IMSIRuleArray']
+
+                log.debug("List of imsis for profile %s in XOS" % p["Name"], imsis=xos_imsis_for_profile)
+                log.debug("List of imsis for profile %s in ONOS" % p["Name"], imsis=progran_imsis_for_profile)
+
+                for i in xos_imsis_for_profile:
+                    if not i.imsi_number in progran_imsis_for_profile:
+                        log.debug("Removing Imsi %s from profile %s" % (i.imsi_number, p['Name']))
+
+                        imsi_link = ServiceInstanceLink.objects.get(subscriber_service_instance_id=i.id)
+
+                        # NOTE: this model has already been removed from the backend, no need to synchronize
+                        imsi_link.backend_need_delete = False
+                        imsi_link.no_sync = True
+                        imsi_link.save() # we need to save it to avoid a synchronization loop
+
+                        imsi_link.delete()
+                    else:
+                        # remove from imsi list coming from progran everything we already know about
+                        progran_imsis_for_profile.remove(i.imsi_number)
+
+                for i in progran_imsis_for_profile:
+                    log.debug("Adding Imsi %s to profile %s" % (i, p['Name']))
+                    imsi = MCordSubscriberInstance.objects.get(imsi_number=i)
+                    imsi_to_profile = ServiceInstanceLink(provider_service_instance=si,
+                                                          subscriber_service_instance=imsi)
+                    imsi_to_profile.save()
+
+            # if the model has not been synchronized yet, skip it
+            if not si.is_new and si.no_sync is False:
+                log.info("Skipping profile %s as not synchronized" % p['Name'])
+                # NOTE add it to the removed profiles to avoid deletion (this is ugly, I know)
+                updated_profiles.append(si.name)
+                continue
 
             si = ProgranHelpers.update_fields(si, p, field_mapping, field_transformations)
 
