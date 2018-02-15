@@ -58,10 +58,13 @@ class SyncProgranEnodeB(SyncStep):
         log.debug("Sync'ing enodeb with data", request_data=data)
 
         if o.previously_sync == False:
-            log.debug("Sending POST")
+            log.debug("Sending POST", url=enodeb_url, data=json.dumps(data))
             r = requests.post(enodeb_url, data=json.dumps(data), auth=HTTPBasicAuth(onos['username'], onos['password']))
         else:
-            log.debug("Sending PUT")
+            data = {
+                "EnodeB": data
+            }
+            log.debug("Sending PUT", url=enodeb_url, data=json.dumps(data))
             r = requests.put(enodeb_url, data=json.dumps(data),
                               auth=HTTPBasicAuth(onos['username'], onos['password']))
 
