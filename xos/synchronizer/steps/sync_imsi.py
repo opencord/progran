@@ -57,8 +57,7 @@ class SyncProgranIMSI(SyncStep):
 
     def delete_record(self, o):
         log.info("deleting imsi", object=str(o), **o.tologdict())
-        onos = ProgranHelpers.get_progran_onos_info(o)
+        onos = ProgranHelpers.get_progran_onos_info()
         profile_url = "http://%s:%s/onos/progran/imsi/%s" % (onos['url'], onos['port'], o.imsi_number)
         r = requests.delete(profile_url, auth=HTTPBasicAuth(onos['username'], onos['password']))
-        o.active_enodeb_id = 0  # removing the value because it has been deleted
         log.info("IMSI synchronized", response=r.json())

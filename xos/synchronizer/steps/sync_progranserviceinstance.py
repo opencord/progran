@@ -83,6 +83,7 @@ class SyncProgranServiceInstance(SyncStep):
             log.info("EnodeB synchronized", response=r.json())
 
         o.previously_sync = True
+        o.save()
 
     def get_handover_for_profile(self, o):
         return {
@@ -111,8 +112,10 @@ class SyncProgranServiceInstance(SyncStep):
             "Name": o.name,
             "UlAllocRBRate": o.UlAllocRBRate,
             "Handover": self.get_handover_for_profile(o),
-            'mmeip': o.mmeip,
-            'mmeport': o.mmeport,
+            "MMECfg": {
+                "Port": o.mmeport,
+                "IPAddr": o.mmeip,
+            },
             'DlWifiRate': o.DlWifiRate,
             'DlUeAllocRbRate': o.DlUeAllocRbRate,
         }

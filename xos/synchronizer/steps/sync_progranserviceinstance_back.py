@@ -162,6 +162,10 @@ class SyncProgranServiceInstanceBack(SyncStep):
             si.no_sync = True
             si.previously_sync = True
 
+            if p["MMECfg"]:
+                si.mmeip = str(p["MMECfg"]["IPAddr"])
+                si.mmeport = str(p["MMECfg"]["Port"])
+
             si.enacted = time.mktime(datetime.datetime.now().timetuple())
 
             si.save()
@@ -172,11 +176,11 @@ class SyncProgranServiceInstanceBack(SyncStep):
         deleted_profiles = ProgranHelpers.list_diff(existing_profiles, updated_profiles)
 
         if len(deleted_profiles) > 0:
-            log.debug("Profiles %s have been removed in progran, removing them from XOS" % str(deleted_profiles))
             for p in deleted_profiles:
                 si = ProgranServiceInstance.objects.get(name=p)
                 if si.created_by == 'XOS' and si.previously_sync == False:
                     # don't delete if the profile has been created by XOS and it hasn't been sync'ed yet
                     continue
                 # TODO delete also the associated Handover
+                log.debug("Profiles %s have been removed in progran, removing it from XOS" % str(p.name))
                 si.delete()
