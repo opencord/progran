@@ -83,6 +83,7 @@ class SyncProgranServiceInstance(SyncStep):
             log.info("EnodeB synchronized", response=r.json())
 
         o.previously_sync = True
+        o.no_sync = True
         o.save()
 
     def get_handover_for_profile(self, o):
