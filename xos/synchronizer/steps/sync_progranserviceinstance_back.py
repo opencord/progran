@@ -58,10 +58,11 @@ class SyncProgranServiceInstanceBack(SyncStep):
         r = requests.get(profile_url, auth=HTTPBasicAuth(onos['username'], onos['password']))
         res = r.json()['ProfileArray']
 
-        log.debug("Received Profiles: ", profiles=res)
 
         # remove default profiles
         res = [p for p in res if "Default" not in p['Name']]
+        pnames = [p['Name'] for p in res]
+        log.debug("Received Profiles: ", profiles=pnames)
 
         field_mapping = {
             'Name': 'name',
@@ -129,7 +130,7 @@ class SyncProgranServiceInstanceBack(SyncStep):
 
             # if the model has not been synchronized yet, skip it
             if not si.is_new and si.no_sync is False:
-                log.info("Skipping profile %s as not synchronized" % p['Name'])
+                log.debug("Skipping profile %s as not synchronized" % p['Name'])
                 # NOTE add it to the removed profiles to avoid deletion (this is ugly, I know)
                 updated_profiles.append(si.name)
                 continue
