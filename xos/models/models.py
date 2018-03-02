@@ -78,14 +78,6 @@ class ProgranServiceInstance(ProgranServiceInstance_decl):
 
         # TODO we should not allow name changes as name is the mapping with the backend
 
-        # NOTE someone is setting owner_id, so just override it for now
-        try:
-            # NOTE we allow just one ProgranService
-            progran_service = ProgranService.objects.all()[0]
-            self.owner_id = progran_service.id
-        except IndexError:
-            raise XOSValidationError("Service Progran cannot be found, please make sure that the model exists.")
-
         # name is mandatory
         if not self.name:
             raise XOSValidationError("name is mandatory for ProgranServiceInstances")

@@ -37,6 +37,7 @@ message Handover (XOSBase){
 message ProgranServiceInstance (ServiceInstance){
     option verbose_name = "Progran Service Instance";
     option description = "Represent a Profile in the Progran ONOS Application";
+    option owner_class_name="ProgranService";
 
     required string DlSchedType = 1 [default = "RR", choices = "(('RR', 'Round Robin'), ('PF', 'Proportional Fairness'), ('MAXCI', 'Maximum C/I'))", max_length = 30, blank = False, null = False, db_index = False];
     required int32 DlAllocRBRate = 2 [default = "0", db_index = False, null = False, blank = False];
