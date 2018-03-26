@@ -183,5 +183,5 @@ class SyncProgranServiceInstanceBack(SyncStep):
                     # don't delete if the profile has been created by XOS and it hasn't been sync'ed yet
                     continue
                 # TODO delete also the associated Handover
-                log.debug("Profiles %s have been removed in progran, removing it from XOS" % str(p.name))
+                log.debug("Profiles %s have been removed in progran, removing it from XOS" % str(p))
                 si.delete()
