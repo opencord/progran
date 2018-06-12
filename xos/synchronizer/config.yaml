@@ -15,34 +15,22 @@
 
 
 name: progran
-accessor:
-  username: xosadmin@opencord.org
-  password: "@/opt/xos/services/progran/credentials/xosadmin@opencord.org"
 required_models:
   - ProgranService
   - ProgranServiceInstance
   - MCordSubscriberInstance
   - ENodeB
   - Handover
-dependency_graph: "/opt/xos/synchronizers/progran/model_deps"
 steps_dir: "/opt/xos/synchronizers/progran/steps"
 sys_dir: "/opt/xos/synchronizers/progran/sys"
 models_dir: "/opt/xos/synchronizers/progran/models"
-#model_policies_dir: "/opt/xos/synchronizers/progran/model_policies"
-
 logging:
   version: 1
   handlers:
     console:
       class: logging.StreamHandler
-    file:
-      class: logging.handlers.RotatingFileHandler
-      filename: /var/log/xos.log
-      maxBytes: 10485760
-      backupCount: 5
   loggers:
     'multistructlog':
       handlers:
           - console
-          - file
       level: DEBUG
