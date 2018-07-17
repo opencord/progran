@@ -40,9 +40,9 @@ message ProgranServiceInstance (ServiceInstance){
     option owner_class_name="ProgranService";
 
     required string DlSchedType = 1 [default = "RR", choices = "(('RR', 'Round Robin'), ('PF', 'Proportional Fairness'), ('MAXCI', 'Maximum C/I'))", max_length = 30, blank = False, null = False, db_index = False];
-    required int32 DlAllocRBRate = 2 [default = "0", db_index = False, null = False, blank = False];
+    required int32 DlAllocRBRate = 2 [default = 0, db_index = False, null = False, blank = False];
     required string UlSchedType = 3 [default = "RR", choices = "(('RR', 'Round Robin'), ('PF', 'Proportional Fairness'), ('MAXCI', 'Maximum C/I'))", max_length = 30, blank = False, null = False, db_index = False];
-    required int32 UlAllocRBRate = 4 [default = "0", db_index = False, null = False, blank = False];
+    required int32 UlAllocRBRate = 4 [default = 0, db_index = False, null = False, blank = False];
     required string start = 5 [content_type = "date", null = True, blank = True];
     required string end = 6 [content_type = "date", null = True, blank = True];
     required int32 AdmControl = 7 [default = "0", choices = "(('0', 'ALL'), ('1', 'Voice Only'), ('2', 'Data Only'))", blank = False, null = False, db_index = False];
