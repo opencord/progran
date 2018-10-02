@@ -56,8 +56,8 @@ message ProgranServiceInstance (ServiceInstance){
     optional manytoone enodeb->ENodeB:profiles = 15 [null = True, blank = True];
     required manytoone handover->Handover:profiles = 16 [null = False, blank = False];
     optional int32 active_enodeb_id = 17 [null = True, blank = True, gui_hidden = True];
-    optional string created_by = 17 [null = True, blank = True, gui_hidden = True];
-    optional bool previously_sync = 18 [null = False, blank = True, default=False, gui_hidden = True];
+    optional string created_by = 18 [null = True, blank = True, gui_hidden = True];
+    optional bool previously_sync = 19 [null = False, blank = True, default=False, gui_hidden = True];
 }
 
 
