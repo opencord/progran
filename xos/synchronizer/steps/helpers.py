@@ -14,7 +14,6 @@
 
 from xosconfig import Config
 from multistructlog import create_logger
-from synchronizers.new_base.modelaccessor import ProgranService
 import time
 import datetime
 
@@ -28,9 +27,9 @@ class ProgranHelpers():
         return ProgranHelpers.get_onos_info_from_service(progran_service)
 
     @staticmethod
-    def get_progran_onos_info():
+    def get_progran_onos_info(model_accessor):
         try:
-            progran_service = ProgranService.objects.all()[0]
+            progran_service = model_accessor.ProgranService.objects.all()[0]
         except IndexError:
             raise Exception("Cannot find Progran Service, does it exists?")
         return ProgranHelpers.get_onos_info_from_service(progran_service)

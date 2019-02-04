@@ -20,8 +20,8 @@ import sys
 import datetime
 import time
 
-from synchronizers.new_base.syncstep import SyncStep
-from synchronizers.new_base.modelaccessor import ProgranServiceInstance, ENodeB, Handover, ServiceInstanceLink, MCordSubscriberInstance
+from xossynchronizer.steps.syncstep import SyncStep
+from xossynchronizer.modelaccessor import ProgranServiceInstance, ENodeB, Handover, ServiceInstanceLink, MCordSubscriberInstance
 
 from xosconfig import Config
 from multistructlog import create_logger
@@ -53,7 +53,7 @@ class SyncProgranServiceInstanceBack(SyncStep):
             return
 
         log.debug("Reading profiles from progran")
-        onos = ProgranHelpers.get_progran_onos_info()
+        onos = ProgranHelpers.get_progran_onos_info(self.model_accessor)
         profile_url = "http://%s:%s/onos/progran/profile/" % (onos['url'], onos['port'])
         r = requests.get(profile_url, auth=HTTPBasicAuth(onos['username'], onos['password']))
         res = r.json()['ProfileArray']

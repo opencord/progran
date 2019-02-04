@@ -20,8 +20,8 @@ import sys
 import datetime
 import time
 
-from synchronizers.new_base.SyncInstanceUsingAnsible import SyncStep
-from synchronizers.new_base.modelaccessor import MCordSubscriberInstance
+from xossynchronizer.steps.SyncInstanceUsingAnsible import SyncStep
+from xossynchronizer.modelaccessor import MCordSubscriberInstance
 
 from xosconfig import Config
 from multistructlog import create_logger
@@ -54,7 +54,7 @@ class SyncImsiBack(SyncStep):
             return
 
         log.debug("Reading IMSI from progran")
-        onos = ProgranHelpers.get_progran_onos_info()
+        onos = ProgranHelpers.get_progran_onos_info(self.model_accessor)
         imsi_url = "http://%s:%s/onos/progran/imsi/" % (onos['url'], onos['port'])
         r = requests.get(imsi_url, auth=HTTPBasicAuth(onos['username'], onos['password']))
         res = r.json()['ImsiArray']

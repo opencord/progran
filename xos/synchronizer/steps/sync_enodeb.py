@@ -16,8 +16,8 @@
 
 import os
 import sys
-from synchronizers.new_base.SyncInstanceUsingAnsible import SyncStep
-from synchronizers.new_base.modelaccessor import ENodeB
+from xossynchronizer.steps.SyncInstanceUsingAnsible import SyncStep
+from xossynchronizer.modelaccessor import ENodeB
 
 from xosconfig import Config
 from multistructlog import create_logger
@@ -51,7 +51,7 @@ class SyncProgranEnodeB(SyncStep):
     def sync_record(self, o):
         log.info("sync'ing enodeb", object=str(o), **o.tologdict())
 
-        onos = ProgranHelpers.get_progran_onos_info()
+        onos = ProgranHelpers.get_progran_onos_info(self.model_accessor)
 
         enodeb_url = "http://%s:%s/onos/progran/enodeb/" % (onos['url'], onos['port'])
         data = self.get_progran_enodeb_field(o)
@@ -76,7 +76,7 @@ class SyncProgranEnodeB(SyncStep):
 
     def delete_record(self, o):
         log.info("deleting enodeb", object=str(o), **o.tologdict())
-        onos = ProgranHelpers.get_progran_onos_info()
+        onos = ProgranHelpers.get_progran_onos_info(self.model_accessor)
         enode_url = "http://%s:%s/onos/progran/enodeb/%s" % (onos['url'], onos['port'], o.enbId)
         r = requests.delete(enode_url, auth=HTTPBasicAuth(onos['username'], onos['password']))
         ProgranHelpers.get_progran_rest_errors(r)

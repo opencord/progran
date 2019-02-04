@@ -16,8 +16,8 @@
 
 import os
 import sys
-from synchronizers.new_base.syncstep import SyncStep
-from synchronizers.new_base.modelaccessor import ProgranServiceInstance, ENodeB, Handover
+from xossynchronizer.steps.syncstep import SyncStep
+from xossynchronizer.modelaccessor import ProgranServiceInstance, ENodeB, Handover
 
 from xosconfig import Config
 from multistructlog import create_logger
@@ -41,7 +41,7 @@ class SyncProgranServiceInstance(SyncStep):
     observes = ProgranServiceInstance
 
     def sync_record(self, o):
-        onos = ProgranHelpers.get_progran_onos_info()
+        onos = ProgranHelpers.get_progran_onos_info(self.model_accessor)
 
         log.info("sync'ing profile", object=str(o), **o.tologdict())
 

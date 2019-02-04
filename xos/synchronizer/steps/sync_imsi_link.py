@@ -16,8 +16,8 @@
 
 import os
 import sys
-from synchronizers.new_base.syncstep import SyncStep
-from synchronizers.new_base.modelaccessor import MCordSubscriberInstance, ServiceInstanceLink, ProgranServiceInstance
+from xossynchronizer.steps.syncstep import SyncStep
+from xossynchronizer.modelaccessor import MCordSubscriberInstance, ServiceInstanceLink, ProgranServiceInstance
 
 from xosconfig import Config
 from multistructlog import create_logger
@@ -57,7 +57,7 @@ class SyncProgranIMSILink(SyncStep):
         if o.provider_service_instance.leaf_model_name == "ProgranServiceInstance" and o.subscriber_service_instance.leaf_model_name ==  "MCordSubscriberInstance":
             log.info("sync'ing link", object=str(o), **o.tologdict())
 
-            onos = ProgranHelpers.get_progran_onos_info()
+            onos = ProgranHelpers.get_progran_onos_info(self.model_accessor)
 
             profile_name = o.provider_service_instance.name
             imsi_number =  o.subscriber_service_instance.leaf_model.imsi_number
@@ -78,7 +78,7 @@ class SyncProgranIMSILink(SyncStep):
         if o.provider_service_instance.leaf_model_name == "ProgranServiceInstance" and o.subscriber_service_instance.leaf_model_name ==  "MCordSubscriberInstance":
             log.info("deleting link", object=str(o), **o.tologdict())
 
-            onos = ProgranHelpers.get_progran_onos_info()
+            onos = ProgranHelpers.get_progran_onos_info(self.model_accessor)
 
             profile_name = o.provider_service_instance.name
             imsi_number =  o.subscriber_service_instance.leaf_model.imsi_number

@@ -16,8 +16,8 @@
 
 import os
 import sys
-from synchronizers.new_base.SyncInstanceUsingAnsible import SyncStep
-from synchronizers.new_base.modelaccessor import MCordSubscriberInstance
+from xossynchronizer.steps.SyncInstanceUsingAnsible import SyncStep
+from xossynchronizer.modelaccessor import MCordSubscriberInstance
 
 from xosconfig import Config
 from multistructlog import create_logger
@@ -47,7 +47,7 @@ class SyncProgranIMSI(SyncStep):
 
     def sync_record(self, o):
         log.info("sync'ing imsi", object=str(o), **o.tologdict())
-        onos = ProgranHelpers.get_progran_onos_info()
+        onos = ProgranHelpers.get_progran_onos_info(self.model_accessor)
         imsi_url = "http://%s:%s/onos/progran/imsi/" % (onos['url'], onos['port'])
         data = self.get_progran_imsi_field(o)
         r = requests.post(imsi_url, data=json.dumps(data), auth=HTTPBasicAuth(onos['username'], onos['password']))
@@ -57,7 +57,7 @@ class SyncProgranIMSI(SyncStep):
 
     def delete_record(self, o):
         log.info("deleting imsi", object=str(o), **o.tologdict())
-        onos = ProgranHelpers.get_progran_onos_info()
+        onos = ProgranHelpers.get_progran_onos_info(self.model_accessor)
         profile_url = "http://%s:%s/onos/progran/imsi/%s" % (onos['url'], onos['port'], o.imsi_number)
         r = requests.delete(profile_url, auth=HTTPBasicAuth(onos['username'], onos['password']))
         log.info("IMSI synchronized", response=r.json())
