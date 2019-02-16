@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# docker build -t 10.90.0.131:30500/xosproject/progran-synchronizer:candidate -f Dockerfile.synchronizer .
+
 # xosproject/progran-synchronizer
 
 FROM xosproject/xos-synchronizer-base:2.1.38

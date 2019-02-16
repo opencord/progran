@@ -57,10 +57,15 @@ class ProgranHelpers():
         return time.mktime(datetime.datetime.strptime(d, "%d.%m.%Y %H:%S").timetuple())
 
     @staticmethod
+    def int_to_string(i):
+        return str(i)
+
+    @staticmethod
     def update_fields(model, dict, mapping={}, transformations={}):
         dict = ProgranHelpers.convert_keys(dict, mapping, transformations)
         for k, v in dict.iteritems():
             if hasattr(model, k):
+                log.debug("Setting %s=%s on %s" % (k, v, model.model_name))
                 setattr(model, k, v)
             # else:
             #     log.debug("%s does not have a '%s' property, not updating it" % (model.model_name, k))
@@ -74,7 +79,7 @@ class ProgranHelpers():
                 if k in transformations:
                     dict[k] = transformations[k](v)
 
-                # NOTE we may have different names that the field in the dict
+                # NOTE we may have different names than the field in the dict
                 dict[mapping[k]] = dict[k]
                 del dict[k]
         return dict

@@ -66,6 +66,10 @@ class SyncImsiBack(SyncStep):
             'UeStatus': 'ue_status'
         }
 
+        field_transformations = {
+            'UeStatus': ProgranHelpers.int_to_string,
+        }
+
         updated_imsi = []
 
         for i in res:
@@ -82,7 +86,7 @@ class SyncImsiBack(SyncStep):
 
                 log.debug("IMSI %s is new, creating it" % i['IMSI'])
 
-            si = ProgranHelpers.update_fields(si, i, field_mapping,)
+            si = ProgranHelpers.update_fields(si, i, field_mapping, field_transformations)
 
             si.save()
 

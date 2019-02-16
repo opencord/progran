@@ -67,7 +67,7 @@ class SyncProgranServiceInstanceBack(SyncStep):
         field_mapping = {
             'Name': 'name',
             'Start': 'start',
-            'End': 'end'
+            'End': 'end',
         }
 
         field_transformations = {
@@ -135,6 +135,10 @@ class SyncProgranServiceInstanceBack(SyncStep):
                 updated_profiles.append(si.name)
                 continue
 
+            # ugly fix
+            if p['AdmControl']:
+                p['AdmControl'] = str(p['AdmControl'])
+
             si = ProgranHelpers.update_fields(si, p, field_mapping, field_transformations)
 
             # checking for handovers
@@ -157,8 +161,8 @@ class SyncProgranServiceInstanceBack(SyncStep):
             # Assigning handover to profile
             si.handover = handover
 
-            si.backend_status = "OK"
-            si.backend_code = 1
+            # si.backend_status = "OK"
+            # si.backend_code = 1
 
             si.no_sync = True
             si.previously_sync = True
