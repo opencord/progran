@@ -12,7 +12,7 @@ message ProgranService (Service){
 
 message ENodeB (XOSBase){
     option verbose_name = "eNodeB";
-    required string description = 1 [db_index = False, max_length = 256, null = False, blank = False];
+    required string description = 1 [tosca_key = True];
     required string enbId = 2 [help_text = "ID of this enodeb", db_index = False, max_length = 256, null = False, blank = False];
     required string ipAddr = 3 [help_text = "IP address of this enodeb", db_index = False, max_length = 256, null = False, blank = False];
     optional string created_by = 4 [null = True, blank = True, gui_hidden = True];
@@ -32,6 +32,7 @@ message Handover (XOSBase){
     required int32 HysteresisA5 = 9 [default = 1, db_index = False, null = False, blank = False];
     required int32 A5TriggerQuantity = 10 [default = 0, db_index = False, null = False, blank = False];
     optional string created_by = 11 [null = True, blank = True, gui_hidden = True];
+    optional string name = 12 [tosca_key = True];
 }
 
 message ProgranServiceInstance (ServiceInstance){
