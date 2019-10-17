@@ -20,7 +20,7 @@ import sys
 import datetime
 import time
 
-from xossynchronizer.steps.SyncInstanceUsingAnsible import SyncStep
+from xossynchronizer.steps.syncstep import SyncStep
 from xossynchronizer.modelaccessor import MCordSubscriberInstance
 
 from xosconfig import Config

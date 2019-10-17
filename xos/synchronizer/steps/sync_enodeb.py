@@ -16,7 +16,7 @@
 
 import os
 import sys
-from xossynchronizer.steps.SyncInstanceUsingAnsible import SyncStep
+from xossynchronizer.steps.syncstep import SyncStep
 from xossynchronizer.modelaccessor import ENodeB
 
 from xosconfig import Config

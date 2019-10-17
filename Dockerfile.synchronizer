@@ -16,7 +16,12 @@
 
 # xosproject/progran-synchronizer
 
-FROM xosproject/xos-synchronizer-base:2.2.5
+FROM xosproject/alpine-grpc-base:0.9.0
+
+# Install pip packages
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt \
+ && pip freeze > /var/xos/pip_freeze_progran_service_`date -u +%Y%m%dT%H%M%S`
 
 COPY xos/synchronizer /opt/xos/synchronizers/progran
 COPY VERSION /opt/xos/synchronizers/progran/
